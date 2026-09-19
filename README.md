@@ -33,9 +33,29 @@ Then open the URL Vite prints (usually `http://localhost:5173`).
 | `/` | Home — paste a claim or pick a seed |
 | `/claim/:id` | Results — original statement, shared premises, contested claims, Venn map, evidence, stakes |
 | `/leaderboard` | Local play-money table and optional nickname |
+| `/blog` | Notes — title, date, and short excerpt for each post |
+| `/blog/:slug` | Full post |
 | `/about` | Ethos and what this first run leaves out |
 
 Seed claim ids: `electric-cars`, `bitcoin`, `us-speech`.
+
+## Blog
+
+Posts are Markdown files in `src/content/blog/`. The filename is the slug (`ev-worked-example.md` → `/blog/ev-worked-example`).
+
+Each file starts with frontmatter:
+
+```md
+---
+title: Your title
+date: 2026-09-19
+excerpt: One or two sentences for the index.
+---
+
+Then ordinary Markdown. Internal links such as `[the EV map](/claim/electric-cars)` stay on-site.
+```
+
+Add a file and rebuild — no CMS. Posts are listed newest first. Starter notes walk an EV claim, the product pitch, and the Bitcoin seed in the same pattern (statement → overlap → leftover → industries to read around). Paper trading and any FCA broker handoff are described as later, not live. Nothing here is a tip or a stock pick.
 
 ## Seed claims
 
