@@ -33,9 +33,27 @@ Then open the URL Vite prints (usually `http://localhost:5173`).
 | `/` | Home — paste a claim or pick a seed |
 | `/claim/:id` | Results — original statement, shared premises, contested claims, Venn map, evidence, stakes |
 | `/leaderboard` | Local play-money table and optional nickname |
+| `/blog` | Blog index — title, date, excerpt |
+| `/blog/:slug` | Full post |
 | `/about` | Ethos and what this first run leaves out |
 
 Seed claim ids: `electric-cars`, `bitcoin`, `us-speech`.
+
+## Adding a blog post
+
+Posts are ordinary Markdown files in the repo. There is no CMS.
+
+1. Add a file under `src/content/posts/`, for example `src/content/posts/my-new-note.md`.
+2. Register it in `src/data/posts.ts`:
+   - `slug` — URL piece, kebab-case (`/blog/my-new-note`)
+   - `title`, `excerpt`, `topicLabel`
+   - `date` — `YYYY-MM-DD` (the index sorts newest first)
+   - `body` — `import myNewNote from '../content/posts/my-new-note.md?raw'`
+   - optional `relatedClaimId` / `relatedClaimLabel` if the post should link to a seed map
+3. Supported Markdown: headings (`#`–`###`), paragraphs, `**bold**`, `*italic*`, `` `code` ``, bullet and numbered lists, `>` quotes, and links (`[text](/path)` or `https://`).
+4. Keep the tone: British English, warm, no dunking. Educational themes only — no buy tips.
+
+Starter slugs: `what-we-almost-agree-is`, `electric-cars-worked-example`, `bitcoin-worked-example`.
 
 ## Seed claims
 
@@ -67,6 +85,7 @@ This is a calibration game, not gambling and not a prize draw.
 - Scraping Reddit or X
 - DNS / hosting setup for wealmostagree.com
 - A live language-model backend (the hook is there; the first pass is local)
+- Login, subscriptions, Stripe, affiliates, paper trading of markets, or a CMS
 
 ## Deploy later
 

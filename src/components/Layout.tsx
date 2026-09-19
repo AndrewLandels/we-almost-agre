@@ -36,6 +36,7 @@ export function Layout() {
                 Home
               </NavLink>
               <NavLink to="/leaderboard">Leaderboard</NavLink>
+              <NavLink to="/blog">Blog</NavLink>
               <NavLink to="/about">About</NavLink>
             </nav>
             <span className="points-chip" title="Play-money points — not real cash">

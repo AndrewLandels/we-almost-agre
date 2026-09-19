@@ -605,12 +605,125 @@ input[type='number'] {
   background: #fff;
 }
 
-.about-prose {
+.about-prose,
+.post-page {
   max-width: 44rem;
 }
 
-.about-prose p {
+.about-prose p,
+.post-prose p {
   font-size: 1.05rem;
+}
+
+.blog-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.blog-card {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.blog-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 40px rgba(31, 42, 36, 0.12);
+}
+
+.blog-card h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+}
+
+.blog-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.post-meta time,
+.blog-card time {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.back-link {
+  color: var(--sage-deep);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.post-page h1 {
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  margin: 12px 0 18px;
+}
+
+.post-prose {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.post-prose h2,
+.post-prose h3 {
+  margin: 1.6rem 0 0.4rem;
+}
+
+.post-prose h2 {
+  font-size: clamp(1.4rem, 3vw, 1.85rem);
+}
+
+.post-prose h3 {
+  font-size: 1.15rem;
+}
+
+.post-prose ul,
+.post-prose ol {
+  margin: 0.2rem 0 0.6rem;
+  padding-left: 1.3rem;
+}
+
+.post-prose li {
+  margin: 0.35rem 0;
+}
+
+.post-prose a {
+  color: var(--sage-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.post-prose blockquote {
+  margin: 0.4rem 0 0.8rem;
+  padding: 14px 18px;
+  border-left: 4px solid var(--amber);
+  background: var(--card);
+  border-radius: 0 16px 16px 0;
+  box-shadow: var(--shadow);
+}
+
+.post-cta {
+  margin-top: 28px;
+}
+
+.post-prose code {
+  font-size: 0.92em;
+  background: var(--paper-deep);
+  padding: 0.1em 0.35em;
+  border-radius: 6px;
 }
 
 .stack {
@@ -631,6 +744,15 @@ input[type='number'] {
   .header-tools {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .nav {
+    flex-wrap: wrap;
+  }
+
+  .nav a {
+    padding: 7px 10px;
+    font-size: 0.9rem;
   }
 }
 
@@ -659,7 +781,8 @@ input[type='number'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .seed-card {
+  .seed-card,
+  .blog-card {
     transition: none;
   }
 }
