@@ -1,8 +1,9 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AgreementMap } from '../components/AgreementMap'
 import { StakePanel } from '../components/StakePanel'
 import { SEED_BY_ID } from '../data/seeds'
-import { loadCustomClaims } from '../lib/storage'
+import { mapExpression } from '../lib/markets/mapExpression'
+import { loadCustomClaims, saveExpression } from '../lib/storage'
 import type { ClaimAnalysis, EvidenceStance } from '../types'
 
 const STANCE_LABEL: Record<EvidenceStance, string> = {
@@ -18,7 +19,15 @@ function findAnalysis(id: string | undefined): ClaimAnalysis | null {
 
 export function ClaimPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const analysis = findAnalysis(id)
+
+  function paperExpress() {
+    if (!analysis) return
+    const mapping = mapExpression(analysis.original)
+    saveExpression(mapping)
+    navigate(`/express/${mapping.id}`)
+  }
 
   if (!analysis) {
     return (
@@ -46,6 +55,14 @@ export function ClaimPage() {
           Original statement
         </p>
         <h1>“{analysis.original}”</h1>
+        <p className="post-cta">
+          <button className="btn sage" type="button" onClick={paperExpress}>
+            Paper-express this statement
+          </button>
+          <span className="hint" style={{ marginLeft: 10 }}>
+            The primary loop lives on the home page. This map is the deeper split.
+          </span>
+        </p>
       </article>
 
       {analysis.source === 'demo' ? (

@@ -45,7 +45,7 @@ export function BlogPostPage() {
       ) : (
         <p className="post-cta">
           <Link className="btn sage" to="/">
-            Try a claim on the home page
+            Paste a statement on the home page
           </Link>
         </p>
       )}

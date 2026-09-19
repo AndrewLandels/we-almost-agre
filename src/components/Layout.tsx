@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { formatPoints } from '../lib/points'
-import { useWallet } from '../hooks/useWallet'
+import { usePaperBook } from '../hooks/usePaperBook'
+import { formatUnits } from '../lib/markets/ledger'
+import { DisclaimerBar } from './DisclaimerBar'
 
 function BrandMark() {
   return (
@@ -14,7 +15,7 @@ function BrandMark() {
 }
 
 export function Layout() {
-  const { wallet } = useWallet()
+  const { equity } = usePaperBook()
 
   return (
     <div className="shell">
@@ -35,14 +36,13 @@ export function Layout() {
               <NavLink to="/" end>
                 Home
               </NavLink>
-              <NavLink to="/leaderboard">Leaderboard</NavLink>
-              <NavLink to="/blog">Blog</NavLink>
-              <NavLink to="/about">About</NavLink>
+              <NavLink to="/book">Book</NavLink>
+              <NavLink to="/deeper">Go deeper</NavLink>
             </nav>
-            <span className="points-chip" title="Play-money points — not real cash">
+            <NavLink className="points-chip" to="/book" title="Paper-book equity — fake money only">
               <span aria-hidden="true" />
-              {formatPoints(wallet.balance)} pts
-            </span>
+              Book · {formatUnits(equity, 0)}
+            </NavLink>
           </div>
         </div>
       </header>
@@ -51,10 +51,15 @@ export function Layout() {
       </main>
       <footer className="site-footer">
         <div className="wrap footer-inner">
-          <p>We Almost Agree · play-money only · wealmostagree.com (DNS later)</p>
-          <p>British English · no dunking · stakes on contested claims only</p>
+          <p>We Almost Agree · paper trading only · not a broker · wealmostagree.com</p>
+          <nav className="footer-nav" aria-label="Secondary">
+            <NavLink to="/blog">Blog</NavLink>
+            <NavLink to="/leaderboard">Leaderboard</NavLink>
+            <NavLink to="/about">About</NavLink>
+          </nav>
         </div>
       </footer>
+      <DisclaimerBar />
     </div>
   )
 }

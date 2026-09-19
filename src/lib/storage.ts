@@ -1,9 +1,13 @@
 import { STARTING_BALANCE } from '../data/seeds'
+import { defaultPaperBook } from './markets/ledger'
+import type { ExpressionMapping, PaperBook } from './markets/types'
 import type { ClaimAnalysis, LeaderboardRow, Wallet } from '../types'
 
 const WALLET_KEY = 'waa.wallet.v1'
 const BOARD_KEY = 'waa.leaderboard.v1'
 const CUSTOM_KEY = 'waa.customClaims.v1'
+const BOOK_KEY = 'waa.paperBook.v1'
+const EXPRESS_KEY = 'waa.expressions.v1'
 
 function randomGuestName(): string {
   const n = Math.floor(100 + Math.random() * 900)
@@ -99,6 +103,58 @@ export function loadCustomClaims(): Record<string, ClaimAnalysis> {
     const raw = window.localStorage.getItem(CUSTOM_KEY)
     if (!raw) return {}
     const parsed = JSON.parse(raw) as Record<string, ClaimAnalysis>
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+export function loadPaperBook(): PaperBook {
+  if (typeof window === 'undefined') return defaultPaperBook()
+  try {
+    const raw = window.localStorage.getItem(BOOK_KEY)
+    if (!raw) {
+      const fresh = defaultPaperBook()
+      savePaperBook(fresh)
+      return fresh
+    }
+    const parsed = JSON.parse(raw) as PaperBook
+    if (typeof parsed.cash !== 'number' || !Array.isArray(parsed.positions)) {
+      return defaultPaperBook()
+    }
+    return {
+      ...defaultPaperBook(),
+      ...parsed,
+      positions: parsed.positions ?? [],
+      closed: parsed.closed ?? [],
+    }
+  } catch {
+    return defaultPaperBook()
+  }
+}
+
+export function savePaperBook(book: PaperBook): void {
+  window.localStorage.setItem(BOOK_KEY, JSON.stringify(book))
+}
+
+export function resetPaperBook(): PaperBook {
+  const fresh = defaultPaperBook()
+  savePaperBook(fresh)
+  return fresh
+}
+
+export function saveExpression(mapping: ExpressionMapping): void {
+  const all = loadExpressions()
+  all[mapping.id] = mapping
+  window.localStorage.setItem(EXPRESS_KEY, JSON.stringify(all))
+}
+
+export function loadExpressions(): Record<string, ExpressionMapping> {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(EXPRESS_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as Record<string, ExpressionMapping>
     return parsed && typeof parsed === 'object' ? parsed : {}
   } catch {
     return {}

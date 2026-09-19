@@ -4,41 +4,56 @@ export function AboutPage() {
       <p className="eyebrow">The idea</p>
       <h1>We Almost Agree</h1>
       <p className="lede">
-        A platform for testing public claims: see the overlap first, then put play-money curiosity
-        only on what is actually in dispute.
+        Paste a gut statement from a real argument. See a paper way that view is often expressed in
+        markets, tracked against a public price. Facts and mechanics only. Go deeper into an
+        agreement map if you want.
       </p>
       <p>
-        Online disagreement mixes shared premises with contested claims. People end up fighting
-        identity battles. This first run is here to shrink the perceived gap — not to manufacture a
-        bigger one.
+        People leave a row holding a blunt view and nowhere useful to put it. Tip sites push trades.
+        Argument sites dunk. This is a calmer third place: express the view with fake money against
+        a real (or delayed) benchmark, plus plain facts on how that kind of position works — without
+        being told what to do.
       </p>
-      <h2>What v1 does</h2>
+      <h2>What this run does</h2>
       <ul>
-        <li>Seed maps for three spicy sentences, with curated splits and evidence notes.</li>
         <li>
-          Free-text claims through <code>analyzeClaim()</code> — a labelled heuristic with the same
-          shape a later LLM can fill.
+          Homepage loop: statement → thin read → common market expressions → paper long/short on a
+          shared multi-asset book.
         </li>
-        <li>A simple Venn-style agreement map.</li>
-        <li>1,000 play points. Stakes on contested claims only. A local leaderboard.</li>
-        <li>A short in-repo blog of the product pitch and worked examples.</li>
+        <li>
+          Starter universe of major-index ETF proxies, liquid shares, and commodity / Bitcoin
+          proxies. Search the catalog; the architecture is built to grow.
+        </li>
+        <li>
+          Delayed public marks via Yahoo Finance’s chart data, proxied so you do not need an API
+          key. Fallback snapshot marks if the feed is down — clearly labelled.
+        </li>
+        <li>
+          A first-pass heuristic mapper, labelled on the page, with the same shape a later model
+          can fill.
+        </li>
+        <li>
+          Under <strong>Go deeper</strong>: seed agreement maps, the in-repo blog, and play-point
+          stakes on contested claims.
+        </li>
       </ul>
-      <h2>What v1 deliberately leaves out</h2>
+      <h2>What this run deliberately leaves out</h2>
       <ul>
         <li>Real money, payments, gambling, or Stripe.</li>
         <li>Live affiliate links — including investment-platform offers.</li>
-        <li>Required accounts. A nickname is enough.</li>
-        <li>Scraping Reddit or X.</li>
-        <li>DNS for wealmostagree.com (the domain is purchased; pointing it comes later).</li>
+        <li>Required accounts. A nickname is enough for the old play-point table.</li>
+        <li>Any claim that the product is FCA-approved. It is not a broker.</li>
+        <li>A live language-model backend (the hook is there; the first pass is local).</li>
       </ul>
       <h2>Tone</h2>
       <p>
-        A counter is another claim in the same map, not a personal attack. Most people want to do a
-        good job and are closer than they think. Monetise clarity later — not humiliation.
+        British English. Warm, calm. Facts and mechanics. We do not say “you should”, “buy this”,
+        or “we recommend ticker X”. Prefer: “One common way people express this view is…” and
+        “Instrument types that exist include…”.
       </p>
       <p className="muted">
-        Seed maps include money and speech topics. Nothing here is financial, legal, or medical
-        advice.
+        Nothing here is personal investment advice. Capital would be at risk in real markets. Paper
+        fills are not broker orders.
       </p>
     </div>
   )
