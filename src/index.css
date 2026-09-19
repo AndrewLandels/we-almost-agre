@@ -103,10 +103,11 @@ h3,
 }
 
 .header-inner {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  column-gap: 16px;
+  row-gap: 8px;
   padding: 14px 0;
 }
 
@@ -139,7 +140,8 @@ h3,
 .nav {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  grid-column: 1 / -1;
 }
 
 .nav a,
@@ -366,6 +368,20 @@ button:focus-visible {
 .seed-card p,
 .muted {
   color: var(--muted);
+}
+
+.overlap-bar {
+  height: 7px;
+  border-radius: 999px;
+  background: var(--amber-soft);
+  overflow: hidden;
+  margin: 4px 0 12px;
+}
+
+.overlap-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--sage), #5d8f78);
 }
 
 .step-grid {
@@ -601,6 +617,24 @@ input[type='number'] {
   padding: 48px 0;
 }
 
+@media (min-width: 821px) {
+  .header-inner {
+    display: flex;
+  }
+
+  .nav {
+    grid-column: auto;
+    margin-left: auto;
+    order: 3;
+    gap: 8px;
+  }
+
+  .points-chip {
+    order: 2;
+    margin-left: auto;
+  }
+}
+
 @media (max-width: 900px) {
   .hero,
   .seed-grid,
@@ -613,8 +647,9 @@ input[type='number'] {
     display: none;
   }
 
-  .nav a:not(.points-chip) {
-    padding: 8px 8px;
+  .brand-name {
+    font-size: 1rem;
+    white-space: nowrap;
   }
 }
 

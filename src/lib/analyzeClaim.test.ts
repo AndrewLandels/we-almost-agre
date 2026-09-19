@@ -20,6 +20,7 @@ describe('analyzeClaim', () => {
   it('labels free-text as a demo first-pass and keeps the later-LLM shape', () => {
     const result = analyzeClaim('Schools should ban phones entirely.')
     expect(result.source).toBe('demo')
+    expect(result.topicLabel).toBe('Education')
     expect(result.sharedPremises.length).toBeGreaterThanOrEqual(2)
     expect(result.contestedClaims.length).toBeGreaterThanOrEqual(2)
     expect(result.overlapNote.toLowerCase()).toMatch(/first-pass|demo|later/)

@@ -70,6 +70,13 @@ export function HomePage() {
           <Link key={claim.id} className="seed-card" to={`/claim/${claim.id}`}>
             <span className="pill">{claim.topicLabel}</span>
             <blockquote>“{claim.original}”</blockquote>
+            <div
+              className="overlap-bar"
+              role="img"
+              aria-label={`${claim.overlapScore} percent already shared`}
+            >
+              <span style={{ width: `${claim.overlapScore}%` }} />
+            </div>
             <p>
               {claim.sharedPremises.length} shared · {claim.contestedClaims.length} contested ·{' '}
               {claim.overlapScore}% overlap

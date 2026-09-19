@@ -86,11 +86,17 @@ function splitClauses(text: string): string[] {
 
 function guessTopic(text: string): TopicHint | null {
   const haystack = normalise(text)
-  return (
-    TOPIC_HINTS.find((topic) =>
-      topic.keywords.some((keyword) => haystack.includes(keyword)),
-    ) ?? null
-  )
+  let best: { topic: TopicHint; score: number; index: number } | null = null
+  for (const topic of TOPIC_HINTS) {
+    const hits = topic.keywords.filter((keyword) => haystack.includes(keyword))
+    if (!hits.length) continue
+    const score = hits.length
+    const index = Math.min(...hits.map((keyword) => haystack.indexOf(keyword)))
+    if (!best || score > best.score || (score === best.score && index < best.index)) {
+      best = { topic, score, index }
+    }
+  }
+  return best?.topic ?? null
 }
 
 function looksPrescriptive(text: string): boolean {
