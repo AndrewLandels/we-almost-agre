@@ -103,12 +103,19 @@ h3,
 }
 
 .header-inner {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
-  column-gap: 16px;
-  row-gap: 8px;
+  justify-content: space-between;
+  gap: 12px 16px;
   padding: 14px 0;
+}
+
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .brand {
@@ -141,7 +148,6 @@ h3,
   display: flex;
   align-items: center;
   gap: 4px;
-  grid-column: 1 / -1;
 }
 
 .nav a,
@@ -617,21 +623,20 @@ input[type='number'] {
   padding: 48px 0;
 }
 
-@media (min-width: 821px) {
+@media (max-width: 720px) {
   .header-inner {
-    display: flex;
+    flex-wrap: wrap;
   }
 
+  .header-tools {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 821px) {
   .nav {
-    grid-column: auto;
-    margin-left: auto;
-    order: 3;
     gap: 8px;
-  }
-
-  .points-chip {
-    order: 2;
-    margin-left: auto;
   }
 }
 

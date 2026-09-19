@@ -30,17 +30,19 @@ export function Layout() {
               <span className="brand-tag">Find where you already agree.</span>
             </span>
           </NavLink>
-          <span className="points-chip" title="Play-money points — not real cash">
-            <span aria-hidden="true" />
-            {formatPoints(wallet.balance)} pts
-          </span>
-          <nav className="nav" aria-label="Primary">
-            <NavLink to="/" end>
-              Home
-            </NavLink>
-            <NavLink to="/leaderboard">Leaderboard</NavLink>
-            <NavLink to="/about">About</NavLink>
-          </nav>
+          <div className="header-tools">
+            <nav className="nav" aria-label="Primary">
+              <NavLink to="/" end>
+                Home
+              </NavLink>
+              <NavLink to="/leaderboard">Leaderboard</NavLink>
+              <NavLink to="/about">About</NavLink>
+            </nav>
+            <span className="points-chip" title="Play-money points — not real cash">
+              <span aria-hidden="true" />
+              {formatPoints(wallet.balance)} pts
+            </span>
+          </div>
         </div>
       </header>
       <main id="main">
