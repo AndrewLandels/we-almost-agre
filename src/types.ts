@@ -66,3 +66,14 @@ export type LeaderboardRow = {
   wins: number
   sample?: boolean
 }
+
+export type BlogPost = {
+  slug: string
+  title: string
+  date: string
+  excerpt: string
+  body: string
+  topicLabel: string
+  relatedClaimId?: string
+  relatedClaimLabel?: string
+}

@@ -21,6 +21,7 @@ export function AboutPage() {
         </li>
         <li>A simple Venn-style agreement map.</li>
         <li>1,000 play points. Stakes on contested claims only. A local leaderboard.</li>
+        <li>A short in-repo blog of the product pitch and worked examples.</li>
       </ul>
       <h2>What v1 deliberately leaves out</h2>
       <ul>
