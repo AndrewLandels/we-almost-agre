@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Connect, Plugin } from 'vite'
-import { buildQuotePayload, parseSymbolQuery } from './src/lib/markets/quoteApi'
+import { handleQuoteRequest } from './api/quote-core.js'
 
 async function handleQuote(
   req: IncomingMessage,
@@ -12,28 +12,18 @@ async function handleQuote(
     next()
     return
   }
-  if (req.method && req.method !== 'GET') {
-    res.statusCode = 405
-    res.setHeader('Content-Type', 'application/json')
-    res.end(JSON.stringify({ error: 'Method not allowed' }))
-    return
-  }
-
-  const parsed = new URL(url, 'http://localhost')
-  const symbols = parseSymbolQuery(parsed.searchParams.get('symbols'))
-  if (!symbols.length) {
-    res.statusCode = 400
-    res.setHeader('Content-Type', 'application/json')
-    res.end(JSON.stringify({ error: 'Pass symbols as a comma-separated list.' }))
-    return
-  }
 
   try {
-    const payload = await buildQuotePayload(symbols)
-    res.statusCode = 200
-    res.setHeader('Content-Type', 'application/json; charset=utf-8')
-    res.setHeader('Cache-Control', 'public, max-age=30')
-    res.end(JSON.stringify(payload))
+    const host = req.headers.host ?? 'localhost'
+    const request = new Request(new URL(url, `http://${host}`), {
+      method: req.method ?? 'GET',
+    })
+    const response = await handleQuoteRequest(request)
+    res.statusCode = response.status
+    response.headers.forEach((value, key) => {
+      res.setHeader(key, value)
+    })
+    res.end(await response.text())
   } catch (error) {
     res.statusCode = 502
     res.setHeader('Content-Type', 'application/json')

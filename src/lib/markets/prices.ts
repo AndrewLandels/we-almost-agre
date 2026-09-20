@@ -1,7 +1,6 @@
 import { fallbackQuotesFor } from '../../data/fallbackQuotes'
 import { getSymbol } from '../../data/universe'
-import type { QuoteApiPayload } from './quoteApi'
-import type { MarketQuote } from './types'
+import type { MarketQuote, QuoteApiPayload } from './types'
 
 const CACHE_KEY = 'waa.quotes.v1'
 
