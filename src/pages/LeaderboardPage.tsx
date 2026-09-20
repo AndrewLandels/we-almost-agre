@@ -18,8 +18,9 @@ export function LeaderboardPage() {
       <p className="eyebrow">Play-money season</p>
       <h1>Leaderboard</h1>
       <p className="lede">
-        Points live in this browser. Sample names keep the table from looking lonely on a first
-        visit. Nothing here is cash, a prize, or a payment.
+        These are play points on contested <em>claims</em>, not the multi-asset paper book. Both
+        live in this browser. Sample names keep the table from looking lonely on a first visit.
+        Nothing here is cash, a prize, or a payment.
       </p>
 
       <form className="nick-row" onSubmit={onSave}>

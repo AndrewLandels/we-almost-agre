@@ -2,10 +2,10 @@
 
 **Find where you already agree. Test what's left.**
 
-A first-run web app for claim maps: paste or pick a public claim, see shared premises versus contested leftovers, glance at a simple agreement map, and stake **play-money points** only on what is still in dispute.
+Paste a gut statement from a real argument. See a **paper** way that view is often expressed in markets, marked to a public (usually delayed) price. Facts and mechanics only — never personal advice. Go deeper into an agreement map if you want.
 
 - Product name: **We Almost Agree**
-- Domain (purchased, DNS not pointed yet): [wealmostagree.com](https://wealmostagree.com)
+- Live: [wealmostagree.com](https://wealmostagree.com) · [we-almost-agre.vercel.app](https://we-almost-agre.vercel.app)
 - Locale: British English (`en-GB`)
 
 ## How to run
@@ -21,74 +21,151 @@ Then open the URL Vite prints (usually `http://localhost:5173`).
 
 | Script | What it does |
 | --- | --- |
-| `npm run dev` | Local development server |
+| `npm run dev` | Local development server (includes `/api/quote`) |
 | `npm run build` | Production bundle |
-| `npm run preview` | Serve the production bundle |
-| `npm test` | Heuristic + play-money unit tests |
+| `npm run preview` | Serve the production bundle (also serves `/api/quote`) |
+| `npm test` | Heuristic, ledger, language, and play-money unit tests |
+
+No API key is required for the default delayed Yahoo Finance feed.
+
+## Try the flagship example
+
+1. Open `/`.
+2. Leave the placeholder, or paste: **The US economy is going down the toilet.**
+3. You land on `/express/us-economy-down`: shared premise, contested expression, suggested symbols (SPY / QQQ / IWM / CPER), a paper long/short ticket, and an educational instrument-types panel.
+4. Open `/book` to see the shared paper ledger across every symbol.
+
+Or hit the **US economy** chip under the homepage form.
 
 ## Main routes
 
 | Route | Purpose |
 | --- | --- |
-| `/` | Home — paste a claim or pick a seed |
-| `/claim/:id` | Results — original statement, shared premises, contested claims, Venn map, evidence, stakes |
-| `/leaderboard` | Local play-money table and optional nickname |
-| `/blog` | Blog index — title, date, excerpt |
+| `/` | Home — paste a gut statement |
+| `/express/:id` | Thin read, suggested market expressions, paper ticket |
+| `/book` | Shared multi-asset paper ledger |
+| `/deeper` | Go-deeper hub — seed maps, blog, leaderboard, about |
+| `/claim/:id` | Agreement map — shared premises, contested claims, Venn, play-point stakes |
+| `/leaderboard` | Local play-point table (claim stakes, not the paper book) |
+| `/blog` | Blog index |
 | `/blog/:slug` | Full post |
-| `/about` | Ethos and what this first run leaves out |
+| `/about` | Ethos and what this run leaves out |
+| `/api/quote?symbols=SPY,GLD` | Delayed public marks (dev plugin + Vercel function) |
 
-Seed claim ids: `electric-cars`, `bitcoin`, `us-speech`.
+Seed claim ids: `electric-cars`, `bitcoin`, `us-speech`.  
+Flagship expression id: `us-economy-down`.
 
-## Adding a blog post
+`vercel.json` still rewrites unknown paths to `index.html` so client routes work on Vercel. `/api/*` is excluded from that rewrite.
 
-Posts are ordinary Markdown files in the repo. There is no CMS.
+## Primary loop
 
-1. Add a file under `src/content/posts/`, for example `src/content/posts/my-new-note.md`.
-2. Register it in `src/data/posts.ts`:
-   - `slug` — URL piece, kebab-case (`/blog/my-new-note`)
-   - `title`, `excerpt`, `topicLabel`
-   - `date` — `YYYY-MM-DD` (the index sorts newest first)
-   - `body` — `import myNewNote from '../content/posts/my-new-note.md?raw'`
-   - optional `relatedClaimId` / `relatedClaimLabel` if the post should link to a seed map
-3. Supported Markdown: headings (`#`–`###`), paragraphs, `**bold**`, `*italic*`, `` `code` ``, bullet and numbered lists, `>` quotes, and links (`[text](/path)` or `https://`).
-4. Keep the tone: British English, warm, no dunking. Educational themes only — no buy tips.
+1. Paste a gut statement (placeholder: “The US economy is going down the toilet.”).
+2. Read one shared premise and the contested market expression, in plain English.
+3. Suggested **market expressions** — common ways people express views like this. Never “you should buy/short X”.
+4. Paper long/short on the chosen symbol. P&amp;L is marked to a delayed public price or a labelled fallback.
+5. Factual panel of instrument *categories* (short ETF, inverse ETF, puts, CFDs, underweight). Educational only.
+6. Disclaimer chrome stays on every page: not personal investment advice · capital at risk · paper trading only · not a broker.
+7. Optional soft line that real trading happens with FCA-authorised firms. No live affiliate in this build.
 
-Starter slugs: `what-we-almost-agree-is`, `electric-cars-worked-example`, `bitcoin-worked-example`.
+Existing claim maps, blog, leaderboard, and about sit under **Go deeper**. If a statement matches a seed claim, the paper-expression path still comes first; the map is a link, not the front door.
 
-## Seed claims
+## Multi-asset architecture
 
-1. “Electric cars are shit.”
-2. “You should invest in Bitcoin.”
-3. “America doesn't have freedom of speech.”
+Four pluggable pieces, so the catalog can grow without rewriting the book:
 
-Each has a curated split, short evidence blurbs (support / challenge / context), and a demo lean on some contested nodes so you can settle play points.
+1. **Universe catalog** — `src/data/universe.ts`  
+   Searchable symbols with an asset class and a plain-English vehicle note (ETF proxy versus the thing it stands for).
+2. **Expression mapping** — `src/lib/markets/mapExpression.ts`  
+   Statement → one or more suggested symbols. v1 is a labelled heuristic. The return shape is the contract a later LLM mapper should fill.
+3. **Price feed** — `src/lib/markets/quoteApi.ts` + `src/lib/markets/providers/yahoo.ts`  
+   Server-side fetch so the browser does not need a key and does not hit Yahoo CORS.
+4. **Shared paper ledger** — `src/lib/markets/ledger.ts` + `src/hooks/usePaperBook.tsx`  
+   One fake-money long/short engine for every symbol. Persists in `localStorage`.
 
-## Custom claims
+### Starter universe
 
-Free text goes through `analyzeClaim()` in `src/lib/analyzeClaim.ts`. v1 is an honest **first-pass heuristic**, labelled on the results page. The return shape (`sharedPremises`, `contestedClaims`, evidence nodes, overlap note) is the contract a later LLM analyser should fill. Close wording of a seed reuses the curated map.
+- **Indices (ETF proxies):** SPY (S&P 500), QQQ (Nasdaq-100), IWM (Russell 2000), DIA (Dow), EWU (UK large caps / FTSE-style), EWG (Germany / DAX-style), EWJ (Japan / Nikkei-style).
+- **Shares:** AAPL, MSFT, GOOGL, AMZN, META, NVDA, TSLA, JPM, XOM, JNJ, V, UNH.
+- **Commodities (ETF proxies, not the future itself):** GLD (gold), SLV (silver), USO (WTI crude), CPER (copper).
+- **Digital asset proxy:** IBIT (spot Bitcoin product).
 
-## Play-money
+The UI says which vehicle you are marking. Paper fills are never broker orders.
 
-- Starting balance: **1,000 points**
-- Stake **for** or **against** contested claims only — never shared premises
-- Demo settlement (where a seed has a lean) pays 2× if you were closer
-- Wallet, custom maps, and the leaderboard persist in `localStorage` on this browser
-- Optional nickname; no required account
+### How to expand the universe
 
-This is a calibration game, not gambling and not a prize draw.
+1. Add a row to `UNIVERSE` in `src/data/universe.ts` (`id`, Yahoo ticker, name, `assetClass`, `vehicleNote`, keywords).
+2. Add a delayed snapshot in `src/data/fallbackQuotes.ts` so the book still works if the live feed is down.
+3. Optionally add a mapping rule in `src/lib/markets/mapExpression.ts` (same `ExpressionMapping` shape).
+4. Run `npm test`.
 
-## What v1 excludes
+Later asset classes (sector ETFs, FX, bonds) should follow the same four pieces — do not special-case a single index.
+
+## Price feed
+
+Default: **Yahoo Finance v8 chart API**, fetched on the server.
+
+- Local: Vite plugin in `vite.quote-plugin.ts` serves `GET /api/quote?symbols=SPY,QQQ`.
+- Production: Vercel function `api/quote.ts` does the same.
+- If the public feed fails, the client uses cached marks, then the labelled snapshot in `src/data/fallbackQuotes.ts`.
+- The UI says **Delayed public marks** or **Fallback marks**. It never claims a broker fill.
+
+Yahoo’s chart endpoint is unofficial and can rate-limit or change. That is why fallback marks exist.
+
+### Adding an API key later (optional)
+
+You do not need this for the current build. When you want a contracted feed:
+
+1. Keep the `/api/quote` shape (`{ quotes, missing, fallbackUsed, asOf }`).
+2. Add a provider next to `src/lib/markets/providers/yahoo.ts` (for example Finnhub or Twelve Data).
+3. Read the key only on the server:
+
+```bash
+# .env (never commit secrets)
+FINNHUB_API_KEY=...
+# or
+TWELVEDATA_API_KEY=...
+PRICE_FEED_PROVIDER=finnhub
+```
+
+4. Switch on `PRICE_FEED_PROVIDER` inside `buildQuotePayload()`. The React app should still call `/api/quote` — do not put vendor keys in `VITE_*` unless you accept that they ship to the browser.
+
+## Language
+
+British English. Warm, calm. Facts and mechanics.
+
+| Avoid | Prefer |
+| --- | --- |
+| “You should short the S&P” | “One common way people express a bearish US-economy view is by positioning against broad US equities such as the S&P 500.” |
+| “Buy this / sell that” | “Instrument types that exist for this kind of exposure include…” |
+| “We recommend ticker X” | “A common expression of this view is…” |
+
+Always on-page: **not personal investment advice · capital at risk · paper trading only · not a broker**.
+
+## Paper book
+
+- Starting cash: **10,000** play units
+- Shared across every symbol
+- Long and short; no leverage; no cash-out; no prizes
+- P&amp;L = notional × percent move (sign flipped for shorts)
+- Persists in `localStorage` as `waa.paperBook.v1`
+
+This is a calibration toy, not gambling and not a prize draw.
+
+## Go deeper (still here)
+
+The older claim-map loop is intact:
+
+- Seed maps and `analyzeClaim()` first-pass heuristic
+- Play-money **points** on contested claims only (starting **1,000**, separate from the paper book)
+- Blog posts in `src/content/posts/`, registered in `src/data/posts.ts`
+
+## What this run excludes
 
 - Real money, payments, gambling, Stripe
 - Live affiliate links
 - Required authentication
-- Scraping Reddit or X
-- DNS / hosting setup for wealmostagree.com
-- A live language-model backend (the hook is there; the first pass is local)
-- Login, subscriptions, Stripe, affiliates, paper trading of markets, or a CMS
-
-## Deploy later
-
-Build static files with `npm run build` (`dist/`). Host that folder on any static host (Cloudflare Pages, Netlify, GitHub Pages, or an nginx/CDN origin). When you are ready, point `wealmostagree.com` at that host — do not change DNS until that decision is made.
+- Claiming FCA approval of the product
+- A live language-model backend
+- Full CMS
 
 Nothing here is financial, legal, or medical advice.
