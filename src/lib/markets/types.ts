@@ -79,3 +79,10 @@ export type InstrumentCategory = {
   title: string
   definition: string
 }
+
+export type QuoteApiPayload = {
+  quotes: MarketQuote[]
+  missing: string[]
+  fallbackUsed: boolean
+  asOf: string
+}

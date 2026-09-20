@@ -50,7 +50,7 @@ Or hit the **US economy** chip under the homepage form.
 | `/blog` | Blog index |
 | `/blog/:slug` | Full post |
 | `/about` | Ethos and what this run leaves out |
-| `/api/quote?symbols=SPY,GLD` | Delayed public marks (dev plugin + Vercel function) |
+| `/api/quote?symbol=SPY` | Delayed public marks (dev plugin + Vercel function; `symbols=SPY,GLD` also works) |
 
 Seed claim ids: `electric-cars`, `bitcoin`, `us-speech`.  
 Flagship expression id: `us-economy-down`.
@@ -77,7 +77,7 @@ Four pluggable pieces, so the catalog can grow without rewriting the book:
    Searchable symbols with an asset class and a plain-English vehicle note (ETF proxy versus the thing it stands for).
 2. **Expression mapping** — `src/lib/markets/mapExpression.ts`  
    Statement → one or more suggested symbols. v1 is a labelled heuristic. The return shape is the contract a later LLM mapper should fill.
-3. **Price feed** — `src/lib/markets/quoteApi.ts` + `src/lib/markets/providers/yahoo.ts`  
+3. **Price feed** — `api/quote-core.js` (Vercel `api/quote.js` + Vite plugin)  
    Server-side fetch so the browser does not need a key and does not hit Yahoo CORS.
 4. **Shared paper ledger** — `src/lib/markets/ledger.ts` + `src/hooks/usePaperBook.tsx`  
    One fake-money long/short engine for every symbol. Persists in `localStorage`.
@@ -94,7 +94,7 @@ The UI says which vehicle you are marking. Paper fills are never broker orders.
 ### How to expand the universe
 
 1. Add a row to `UNIVERSE` in `src/data/universe.ts` (`id`, Yahoo ticker, name, `assetClass`, `vehicleNote`, keywords).
-2. Add a delayed snapshot in `src/data/fallbackQuotes.ts` so the book still works if the live feed is down.
+2. Add a delayed snapshot in `api/quote-core.js` (and keep `src/data/fallbackQuotes.ts` re-exporting it) so the book still works if the live feed is down.
 3. Optionally add a mapping rule in `src/lib/markets/mapExpression.ts` (same `ExpressionMapping` shape).
 4. Run `npm test`.
 
@@ -102,14 +102,34 @@ Later asset classes (sector ETFs, FX, bonds) should follow the same four pieces 
 
 ## Price feed
 
-Default: **Yahoo Finance v8 chart API**, fetched on the server.
+Default: **Yahoo Finance v8 chart API**, fetched on the server. If Yahoo is blocked (common from some cloud IPs), the function tries **Nasdaq’s public quote**, then a labelled snapshot.
 
-- Local: Vite plugin in `vite.quote-plugin.ts` serves `GET /api/quote?symbols=SPY,QQQ`.
-- Production: Vercel function `api/quote.ts` does the same.
-- If the public feed fails, the client uses cached marks, then the labelled snapshot in `src/data/fallbackQuotes.ts`.
+- Local: Vite plugin in `vite.quote-plugin.ts` serves `GET /api/quote`.
+- Production: Vercel function `api/quote.js` (Web Handler, no `src/*.ts` imports).
+- Query: `?symbol=SPY` or `?symbols=SPY,GLD`.
+- If every live feed fails, the handler still returns JSON using the snapshot in `api/quote-core.js`. The client can also use cached marks, then `src/data/fallbackQuotes.ts`.
 - The UI says **Delayed public marks** or **Fallback marks**. It never claims a broker fill.
 
-Yahoo’s chart endpoint is unofficial and can rate-limit or change. That is why fallback marks exist.
+Yahoo’s chart endpoint is unofficial and can rate-limit or change. That is why Nasdaq and the snapshot exist.
+
+### Confirm after a Vercel deploy
+
+Wait until the production deployment for the merged commit is Ready, then:
+
+```bash
+curl -sS -D - "https://www.wealmostagree.com/api/quote?symbol=SPY"
+curl -sS "https://www.wealmostagree.com/api/quote?symbols=SPY,GLD"
+```
+
+Expect **HTTP 200**, `content-type: application/json`, and a `quotes` array with a numeric `price`. `source` should be `live-delayed` when Yahoo or Nasdaq answered, or `fallback` if only the snapshot was available. You should **not** see `x-vercel-error: FUNCTION_INVOCATION_FAILED`.
+
+A structured 4xx/5xx JSON body (`error`, optional `detail`) is also acceptable to the client — a process crash is not.
+
+Locally, after `npm run dev`:
+
+```bash
+curl -sS "http://localhost:5173/api/quote?symbol=SPY"
+```
 
 ### Adding an API key later (optional)
 
