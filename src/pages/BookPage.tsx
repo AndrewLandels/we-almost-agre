@@ -20,8 +20,9 @@ export function BookPage() {
         <p className="eyebrow">Shared paper ledger</p>
         <h1>Paper book</h1>
         <p className="lede">
-          One fake-money book across indices, shares, and commodity proxies. Marks come from a
-          delayed public feed or a labelled fallback. {PAPER_ONLY_LABEL}.
+          Paper P&amp;L tracks expressions of a view across Polymarket markets, stocks and indices, bets,
+          and similar — not only an S&amp;P-style proxy. Lines here are fake money marked to a public
+          price. {PAPER_ONLY_LABEL}.
         </p>
       </div>
 

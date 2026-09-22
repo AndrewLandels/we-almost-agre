@@ -1,8 +1,10 @@
-import { FormEvent, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ClosestMatches } from '../components/ClosestMatches'
 import { isMappable, mapExpression } from '../lib/markets/mapExpression'
 import { saveExpression } from '../lib/storage'
 import { usePageTitle } from '../lib/usePageTitle'
+import type { ExpressionMapping } from '../lib/markets/types'
 
 const FLAGSHIP = 'The US economy is going down the toilet.'
 
@@ -14,16 +16,29 @@ const EXAMPLES = [
 
 export function HomePage() {
   usePageTitle('We Almost Agree')
-  const navigate = useNavigate()
   const [draft, setDraft] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [mapping, setMapping] = useState<ExpressionMapping | null>(null)
+  const resultsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!mapping) return
+    const node = resultsRef.current
+    const heading = node?.querySelector('h2')
+    if (!node || !heading) return
+    const top = heading.getBoundingClientRect().top
+    if (top < 72 || top > window.innerHeight * 0.35) {
+      node.scrollIntoView({ behavior: 'auto', block: 'start' })
+    }
+    if (heading instanceof HTMLElement) heading.focus({ preventScroll: true })
+  }, [mapping])
 
   function submitStatement(text: string) {
     setError(null)
     try {
-      const mapping = mapExpression(text)
-      saveExpression(mapping)
-      navigate(`/express/${mapping.id}`)
+      const next = mapExpression(text)
+      saveExpression(next)
+      setMapping(next)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not read that statement.')
     }
@@ -34,57 +49,109 @@ export function HomePage() {
     submitStatement(draft)
   }
 
+  function onStatementKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== 'Enter' || event.shiftKey) return
+    event.preventDefault()
+    if (isMappable(draft)) submitStatement(draft)
+  }
+
   return (
     <div className="wrap">
-      <section className="hero">
-        <div>
-          <p className="eyebrow">Paper expressions · fake money · real marks</p>
-          <h1>Paste the gut sentence. See how that view is often expressed.</h1>
-          <p className="lede">
-            Leave the row with a blunt take — “the US economy is going down the toilet” — and put it
-            on a paper line marked to a public price. Facts and mechanics only. Not a tip, not a
-            dunk, not a broker.
-          </p>
-        </div>
-        <form className="hero-card" onSubmit={onSubmit}>
-          <label className="field" htmlFor="statement">
-            Paste a gut statement
-          </label>
-          <textarea
-            id="statement"
-            className="claim-input"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder={FLAGSHIP}
-            maxLength={400}
-          />
-          <div className="form-row">
-            <p className="hint">First-pass heuristic, labelled on the next page. Ready for a later model.</p>
-            <button className="btn" type="submit" disabled={!isMappable(draft)}>
-              See how this is often expressed
-            </button>
-          </div>
-          {error ? <p className="alert">{error}</p> : null}
-          <div className="example-row">
-            <p className="hint">Or try a worked sentence</p>
-            <div className="presets">
-              {EXAMPLES.map((example) => (
-                <button
-                  key={example.id}
-                  type="button"
-                  className="preset"
-                  onClick={() => {
-                    setDraft(example.text)
-                    submitStatement(example.text)
-                  }}
-                >
-                  {example.label}
-                </button>
-              ))}
+      {mapping ? (
+        <div className="submitted-top" ref={resultsRef}>
+          <p className="eyebrow">Your statement</p>
+          <h1 className="result-statement">“{mapping.original}”</h1>
+          <ClosestMatches mapping={mapping} />
+          <form className="hero-card rematch" onSubmit={onSubmit}>
+            <label className="field" htmlFor="statement">
+              Edit the sentence
+            </label>
+            <div className="rematch-bar">
+              <textarea
+                id="statement"
+                className="claim-input"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={onStatementKeyDown}
+                placeholder={FLAGSHIP}
+                maxLength={400}
+              />
+              <button className="btn" type="submit" disabled={!isMappable(draft)}>
+                See closest matches
+              </button>
             </div>
+            {error ? <p className="alert">{error}</p> : null}
+            <div className="example-row">
+              <div className="presets">
+                {EXAMPLES.map((example) => (
+                  <button
+                    key={example.id}
+                    type="button"
+                    className="preset"
+                    onClick={() => {
+                      setDraft(example.text)
+                      submitStatement(example.text)
+                    }}
+                  >
+                    {example.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <section className="hero">
+          <div>
+            <p className="eyebrow">Paper expressions · fake money · real marks</p>
+            <h1>Paste the gut sentence. See how that view shows up.</h1>
+            <p className="lede">
+              Press Enter. The next thing you see is a few live ways that view shows up — prediction
+              markets, shares, indices, and similar bets. Facts and mechanics only. Not a tip, not a
+              dunk, not a broker.
+            </p>
           </div>
-        </form>
-      </section>
+          <form className="hero-card" onSubmit={onSubmit}>
+            <label className="field" htmlFor="statement">
+              Paste a gut statement
+            </label>
+            <textarea
+              id="statement"
+              className="claim-input"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={onStatementKeyDown}
+              placeholder={FLAGSHIP}
+              maxLength={400}
+            />
+            <div className="form-row">
+              <p className="hint">Press Enter. Shift+Enter for a new line.</p>
+              <button className="btn" type="submit" disabled={!isMappable(draft)}>
+                See closest matches
+              </button>
+            </div>
+            {error ? <p className="alert">{error}</p> : null}
+            <div className="example-row">
+              <p className="hint">Or try a worked sentence</p>
+              <div className="presets">
+                {EXAMPLES.map((example) => (
+                  <button
+                    key={example.id}
+                    type="button"
+                    className="preset"
+                    onClick={() => {
+                      setDraft(example.text)
+                      submitStatement(example.text)
+                    }}
+                  >
+                    {example.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </form>
+        </section>
+      )}
 
       <div className="section-head">
         <div>
@@ -95,15 +162,18 @@ export function HomePage() {
       <div className="step-grid four">
         <article className="step">
           <strong>1. Paste the sentence</strong>
-          <p>The blunt thing you said to a sibling or a mate — not a research note.</p>
+          <p>The blunt thing you said to a sibling or a mate — then press Enter.</p>
         </article>
         <article className="step">
-          <strong>2. Thin read</strong>
-          <p>One shared premise and the leftover market expression, in plain English.</p>
+          <strong>2. Closest live matches</strong>
+          <p>About three ways the view shows up: a prediction market, a share, an index, or a similar bet.</p>
         </article>
         <article className="step">
           <strong>3. Paper track</strong>
-          <p>Fake money, long or short, marked to a delayed public price. No cash-out. No prizes.</p>
+          <p>
+            Paper P&amp;L follows the expression you pick — a Polymarket market, a stock or index, a bet,
+            or similar. Fake money. Not only an S&amp;P proxy. No cash-out. No prizes.
+          </p>
         </article>
         <article className="step">
           <strong>4. Go deeper</strong>
@@ -116,7 +186,7 @@ export function HomePage() {
           <p className="eyebrow">Go deeper</p>
           <h2>Maps, notes, and the old play-point table</h2>
         </div>
-        <p className="muted">Still here. Not required before you paper-track a view.</p>
+        <p className="muted">Still here. Not required before you look at a live match.</p>
       </div>
       <div className="seed-grid deeper-grid">
         <Link className="seed-card" to="/deeper">

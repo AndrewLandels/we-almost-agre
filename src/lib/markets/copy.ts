@@ -13,6 +13,31 @@ export const SUGGESTION_PREFACE = 'Common ways people express views like this'
 
 export const PAPER_ONLY_LABEL = 'Simulation · not a real trade · not advice'
 
+export const CLOSEST_EYEBROW = 'Ways this view shows up'
+
+export const CLOSEST_TITLE = 'Closest live matches'
+
+export const CLOSEST_LENS =
+  'About three options to look at. Curiosity only — not a recommendation, and not personal investment advice.'
+
+export const POLYMARKET_RISK =
+  'Prediction markets may be restricted where you live. If you leave this site, capital is at risk.'
+
+export const CLOSEST_EMPTY =
+  'No close live match turned up for this sentence. Many gut statements do not sit on an open market.'
+
+export const CLOSEST_ERROR =
+  'Live prediction markets could not be reached just now. Share and index options are still below if we have them.'
+
+export const CLOSEST_LOADING = 'Looking for live matches…'
+
+export const POLYMARKET_VIEW = 'View on Polymarket'
+
+export const PAPER_TRACK_THIS = 'Paper-track this'
+
+export const PAPER_TRACK_FRAMING =
+  'A paper position is linked to a real-world expression of the view: a Polymarket market, a stock or index, a bet, or something similar — not only an S&P-style proxy. Paper P&L is fake money marked against that kind of expression, for curiosity. It is not an order, and not advice to bet.'
+
 export const STARTING_PAPER_CASH = 10_000
 
 export const PAPER_SIZE_PRESETS = [250, 500, 1000, 2500] as const

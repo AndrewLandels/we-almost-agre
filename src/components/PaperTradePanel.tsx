@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { ASSET_CLASS_LABEL, getSymbol } from '../data/universe'
 import { usePaperBook } from '../hooks/usePaperBook'
-import { MIN_PAPER_SIZE, PAPER_ONLY_LABEL, PAPER_SIZE_PRESETS } from '../lib/markets/copy'
+import { MIN_PAPER_SIZE, PAPER_ONLY_LABEL, PAPER_SIZE_PRESETS, PAPER_TRACK_FRAMING } from '../lib/markets/copy'
 import { formatSignedUnits, formatUnits, unrealisedPnl } from '../lib/markets/ledger'
 import type { PaperSide } from '../lib/markets/types'
 
@@ -81,8 +81,8 @@ export function PaperTradePanel({ symbolId, statementId }: Props) {
       <form className="stake-box" onSubmit={onOpen}>
         <p className="field">Open a paper position</p>
         <p className="hint">
-          Fake money only. A paper long improves if the mark rises; a paper short improves if the
-          mark falls. Nobody is sending an order to a broker.
+          {PAPER_TRACK_FRAMING} A paper long improves if the mark rises; a paper short improves if the
+          mark falls.
         </p>
         <div className="sides">
           <button
