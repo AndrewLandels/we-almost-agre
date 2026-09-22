@@ -18,6 +18,15 @@ export type PolymarketSearchResult = {
   matches: PolymarketMatch[]
 }
 
+export type EquityOption = {
+  symbolId: string
+  note: string
+}
+
+export type LiveOption =
+  | { kind: 'polymarket'; id: string; match: PolymarketMatch }
+  | { kind: 'equity'; id: string; symbolId: string; note: string }
+
 const GAMMA_SEARCH = 'https://gamma-api.polymarket.com/public-search'
 const EVENT_URL = 'https://polymarket.com/event'
 const MAX_MATCHES = 3
@@ -294,6 +303,33 @@ export async function searchPolymarket(
   const secondary = selectLiveMatches(await fetchGamma(raw, fetchImpl), raw)
   if (secondary.length) return { query: raw, matches: secondary }
   return { query: firstQuery, matches: [] }
+}
+
+/** About three things to look at: prediction markets first, then a share or index if we have one. */
+export function composeLiveOptions(matches: PolymarketMatch[], equities: EquityOption[]): LiveOption[] {
+  const polys = matches.slice(0, 3)
+  const shares = equities.filter((row) => row.symbolId).slice(0, 3)
+  const toPoly = (match: PolymarketMatch): LiveOption => ({ kind: 'polymarket', id: match.id, match })
+  const toEquity = (row: EquityOption): LiveOption => ({
+    kind: 'equity',
+    id: row.symbolId,
+    symbolId: row.symbolId,
+    note: row.note,
+  })
+
+  if (!polys.length) return shares.map(toEquity)
+  if (!shares.length) return polys.map(toPoly)
+
+  const polyTake = polys.length >= 2 ? 2 : 1
+  const chosen: LiveOption[] = [
+    ...polys.slice(0, polyTake).map(toPoly),
+    ...shares.slice(0, 3 - polyTake).map(toEquity),
+  ]
+  for (const match of polys.slice(polyTake)) {
+    if (chosen.length >= 3) break
+    chosen.push(toPoly(match))
+  }
+  return chosen.slice(0, 3)
 }
 
 export function readPolymarketResponse(payload: unknown): PolymarketSearchResult {

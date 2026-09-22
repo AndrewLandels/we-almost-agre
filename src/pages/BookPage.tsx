@@ -20,8 +20,9 @@ export function BookPage() {
         <p className="eyebrow">Shared paper ledger</p>
         <h1>Paper book</h1>
         <p className="lede">
-          One fake-money book across indices, shares, and commodity proxies. Marks come from a
-          delayed public feed or a labelled fallback. {PAPER_ONLY_LABEL}.
+          Fake-money P&amp;L for expressions of a view: shares, indices, commodity proxies, and similar
+          listed markets, marked to a public price. Prediction markets sit alongside those expressions;
+          their live prices stay on the venue. Not a single S&amp;P line. {PAPER_ONLY_LABEL}.
         </p>
       </div>
 

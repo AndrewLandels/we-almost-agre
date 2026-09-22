@@ -1,29 +1,30 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { FactualPanel } from '../components/FactualPanel'
 import { PaperTradePanel } from '../components/PaperTradePanel'
-import { PolymarketMatches } from '../components/PolymarketMatches'
 import { SymbolPicker } from '../components/SymbolPicker'
 import { ASSET_CLASS_LABEL, getSymbol } from '../data/universe'
 import { usePaperBook } from '../hooks/usePaperBook'
-import { FCA_SOFT_LINE, FIRST_PASS_LABEL, SUGGESTION_PREFACE } from '../lib/markets/copy'
+import { FCA_SOFT_LINE, FIRST_PASS_LABEL, PAPER_TRACK_FRAMING, SUGGESTION_PREFACE } from '../lib/markets/copy'
 import { cannedMapping } from '../lib/markets/mapExpression'
 import { usePageTitle } from '../lib/usePageTitle'
 import { loadExpressions } from '../lib/storage'
 
 export function ExpressPage() {
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
+  const requestedSymbol = searchParams.get('symbol') ?? undefined
   const mapping = useMemo(() => {
     if (!id) return null
     return loadExpressions()[id] ?? cannedMapping(id)
   }, [id])
   const { watchSymbols } = usePaperBook()
-  const firstSuggestion = mapping?.suggestions[0]?.symbolId
-  const [chosen, setChosen] = useState<string | undefined>(firstSuggestion)
+  const [chosen, setChosen] = useState<string | undefined>(undefined)
 
   useEffect(() => {
-    setChosen(mapping?.suggestions[0]?.symbolId)
-  }, [mapping])
+    const fromQuery = requestedSymbol && getSymbol(requestedSymbol) ? requestedSymbol : undefined
+    setChosen(fromQuery ?? mapping?.suggestions[0]?.symbolId)
+  }, [mapping, requestedSymbol])
 
   useEffect(() => {
     if (!mapping) return
@@ -139,7 +140,7 @@ export function ExpressPage() {
         </div>
       </section>
 
-      <PolymarketMatches statement={mapping.original} />
+      <p className="muted">{PAPER_TRACK_FRAMING}</p>
 
       {chosen ? <PaperTradePanel symbolId={chosen} statementId={mapping.id} /> : null}
 

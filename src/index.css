@@ -196,6 +196,27 @@ main {
   padding: 18px 0 10px;
 }
 
+.submitted-top {
+  scroll-margin-top: 72px;
+  padding-top: 8px;
+}
+
+.result-statement {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  margin: 8px 0 12px;
+}
+
+.rematch-bar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.rematch textarea.claim-input {
+  min-height: 64px;
+}
+
 .eyebrow {
   display: inline-flex;
   gap: 8px;
@@ -448,11 +469,39 @@ button:focus-visible {
   gap: 16px;
 }
 
-.poly-grid {
+.poly-grid,
+.closest-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 14px;
+}
+
+.closest-matches {
+  scroll-margin-top: 72px;
+}
+
+.closest-matches .section-head {
+  margin: 4px 0 8px;
+}
+
+.closest-grid .poly-card {
+  padding: 16px;
+}
+
+.closest-paper {
+  margin-top: 16px;
+}
+
+.match-note {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.match-skeleton {
+  min-height: 180px;
 }
 
 .poly-card {
@@ -979,6 +1028,10 @@ input[type='number'] {
     flex-wrap: wrap;
   }
 
+  .rematch-bar {
+    grid-template-columns: 1fr;
+  }
+
   .header-tools {
     width: 100%;
     justify-content: space-between;
@@ -1008,6 +1061,7 @@ input[type='number'] {
   .split,
   .suggest-grid,
   .poly-grid,
+  .closest-grid,
   .book-stats,
   .mark-row,
   .deeper-grid {

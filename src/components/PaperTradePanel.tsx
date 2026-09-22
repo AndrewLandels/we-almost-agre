@@ -81,8 +81,10 @@ export function PaperTradePanel({ symbolId, statementId }: Props) {
       <form className="stake-box" onSubmit={onOpen}>
         <p className="field">Open a paper position</p>
         <p className="hint">
-          Fake money only. A paper long improves if the mark rises; a paper short improves if the
-          mark falls. Nobody is sending an order to a broker.
+          Fake money on this expression — a share, an index, or a similar listed proxy — marked to a
+          public price. The same view can also show up as a prediction market or another bet. A paper
+          long improves if the mark rises; a paper short improves if the mark falls. Nobody is placing
+          that bet for you.
         </p>
         <div className="sides">
           <button

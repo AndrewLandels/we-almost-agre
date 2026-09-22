@@ -1,19 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import {
-  POLYMARKET_EMPTY,
-  POLYMARKET_ERROR,
-  POLYMARKET_LENS,
+  CLOSEST_EMPTY,
+  CLOSEST_ERROR,
+  CLOSEST_LENS,
+  CLOSEST_TITLE,
+  PAPER_TRACK_FRAMING,
   POLYMARKET_RISK,
-  POLYMARKET_TITLE,
 } from './copy'
 import { bannedLanguageHits } from './language'
 import {
   cleanStatementQuery,
+  composeLiveOptions,
   formatPricePercent,
   formatVolumeUsd,
   polymarketSearchUrl,
   searchPolymarket,
   selectLiveMatches,
+  type PolymarketMatch,
 } from './polymarket'
 
 const fedPayload = {
@@ -306,9 +309,54 @@ describe('searchPolymarket', () => {
   })
 })
 
+function sampleMatch(id: string): PolymarketMatch {
+  return {
+    id,
+    title: id,
+    eventTitle: id,
+    url: `https://polymarket.com/event/${id}`,
+    outcomes: [],
+    volumeLabel: null,
+  }
+}
+
+describe('compose live options', () => {
+  const shares = [
+    { symbolId: 'SPY', note: 'Broad US equities' },
+    { symbolId: 'QQQ', note: 'Nasdaq-100' },
+    { symbolId: 'IWM', note: 'Smaller US companies' },
+  ]
+
+  it('mixes two prediction markets with one share when both exist', () => {
+    const options = composeLiveOptions(
+      [sampleMatch('fed'), sampleMatch('cpi'), sampleMatch('jobs')],
+      shares,
+    )
+    expect(options.map((option) => option.id)).toEqual(['fed', 'cpi', 'SPY'])
+  })
+
+  it('fills with shares when only one prediction market is close', () => {
+    const options = composeLiveOptions([sampleMatch('btc')], shares)
+    expect(options.map((option) => option.kind)).toEqual(['polymarket', 'equity', 'equity'])
+    expect(options.map((option) => option.id)).toEqual(['btc', 'SPY', 'QQQ'])
+  })
+
+  it('shows shares alone when no live market is close', () => {
+    expect(composeLiveOptions([], shares).map((option) => option.id)).toEqual(['SPY', 'QQQ', 'IWM'])
+  })
+
+  it('shows prediction markets alone when there is no share', () => {
+    expect(composeLiveOptions([sampleMatch('a'), sampleMatch('b'), sampleMatch('c')], []).map((option) => option.id)).toEqual([
+      'a',
+      'b',
+      'c',
+    ])
+  })
+})
+
 describe('Polymarket copy', () => {
   it('stays on the non-advice side of the language rules', () => {
-    for (const text of [POLYMARKET_TITLE, POLYMARKET_LENS, POLYMARKET_RISK, POLYMARKET_EMPTY, POLYMARKET_ERROR]) {
+    for (const text of [CLOSEST_TITLE, CLOSEST_LENS, POLYMARKET_RISK, CLOSEST_EMPTY, CLOSEST_ERROR, PAPER_TRACK_FRAMING]) {
       expect(bannedLanguageHits(text), text).toEqual([])
     }
   })
