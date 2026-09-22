@@ -106,9 +106,9 @@ export function HomePage() {
             <p className="eyebrow">Paper expressions · fake money · real marks</p>
             <h1>Paste the gut sentence. See how that view shows up.</h1>
             <p className="lede">
-              Press Enter. The next thing you see is a few live ways that view shows up — prediction
-              markets, shares, indices, and similar bets. Facts and mechanics only. Not a tip, not a
-              dunk, not a broker.
+              Press Enter. The next thing you see is several live ways that view shows up — closest
+              prediction markets, markets people are trading now, shares, indices, and similar bets.
+              Facts and mechanics only. Not a tip, not a dunk, not a broker.
             </p>
           </div>
           <form className="hero-card" onSubmit={onSubmit}>
@@ -166,7 +166,10 @@ export function HomePage() {
         </article>
         <article className="step">
           <strong>2. Closest live matches</strong>
-          <p>About three ways the view shows up: a prediction market, a share, an index, or a similar bet.</p>
+          <p>
+            Several ways the view shows up: closest prediction markets, markets trending today, a share,
+            an index, or a similar bet.
+          </p>
         </article>
         <article className="step">
           <strong>3. Paper track</strong>

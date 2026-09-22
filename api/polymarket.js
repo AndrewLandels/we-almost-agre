@@ -2,8 +2,10 @@
 
 // src/lib/markets/polymarket.ts
 var GAMMA_SEARCH = "https://gamma-api.polymarket.com/public-search";
+var GAMMA_EVENTS = "https://gamma-api.polymarket.com/events";
 var EVENT_URL = "https://polymarket.com/event";
 var MAX_MATCHES = 3;
+var MAX_TRENDS = 4;
 var USER_AGENT = "WeAlmostAgree/0.1 (educational market lens; +https://www.wealmostagree.com)";
 var STOP = /* @__PURE__ */ new Set([
   "a",
@@ -172,6 +174,16 @@ function polymarketSearchUrl(query) {
   });
   return `${GAMMA_SEARCH}?${params.toString()}`;
 }
+function polymarketTrendingUrl() {
+  const params = new URLSearchParams({
+    active: "true",
+    closed: "false",
+    order: "volume24hr",
+    ascending: "false",
+    limit: "8"
+  });
+  return `${GAMMA_EVENTS}?${params.toString()}`;
+}
 function formatVolumeUsd(volume) {
   if (!Number.isFinite(volume) || volume <= 0) return null;
   const units = [
@@ -201,6 +213,13 @@ function eventSlug(value) {
 }
 function isClosed(record) {
   return record.closed === true || record.archived === true;
+}
+function readIsoDate(value) {
+  const text = asString(value);
+  if (!text) return null;
+  const time = Date.parse(text);
+  if (!Number.isFinite(time)) return null;
+  return new Date(time).toISOString();
 }
 function overlapScore(query, text) {
   const wanted = new Set(significantTokens(query));
@@ -245,7 +264,8 @@ function rankMarkets(query, markets) {
       title,
       overlap,
       volume,
-      outcomes: readOutcomes(market)
+      outcomes: readOutcomes(market),
+      endDate: readIsoDate(market.endDate)
     };
     if (!best || ranked.overlap > best.overlap || ranked.overlap === best.overlap && ranked.volume > best.volume) {
       best = ranked;
@@ -277,9 +297,64 @@ function selectLiveMatches(payload, query) {
       eventTitle,
       url: `${EVENT_URL}/${slug}`,
       outcomes: best.outcomes,
-      volumeLabel: formatVolumeUsd(best.volume)
+      volumeLabel: formatVolumeUsd(best.volume),
+      volumeWindow: best.volume > 0 ? "lifetime" : null,
+      origin: "closest",
+      endDate: best.endDate ?? readIsoDate(event.endDate)
     });
     if (matches.length >= MAX_MATCHES) break;
+  }
+  return matches;
+}
+function pickBusiestMarket(markets) {
+  if (!Array.isArray(markets)) return null;
+  let best = null;
+  for (const item of markets) {
+    const market = asRecord(item);
+    if (!market || isClosed(market) || market.active === false) continue;
+    const title = asString(market.question) ?? asString(market.groupItemTitle);
+    if (!title) continue;
+    const ranked = {
+      id: asString(market.id) ?? asString(market.slug) ?? title,
+      title,
+      volume24: asNumber(market.volume24hr) ?? 0,
+      lifetime: marketVolume(market) ?? 0,
+      outcomes: readOutcomes(market),
+      endDate: readIsoDate(market.endDate)
+    };
+    if (!best || ranked.volume24 > best.volume24 || ranked.volume24 === best.volume24 && ranked.lifetime > best.lifetime) {
+      best = ranked;
+    }
+  }
+  return best;
+}
+function selectTrendingMarkets(payload) {
+  const root = asRecord(payload);
+  const events = Array.isArray(payload) ? payload : root && Array.isArray(root.events) ? root.events : [];
+  const matches = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const item of events) {
+    const event = asRecord(item);
+    if (!event || isClosed(event) || event.active === false) continue;
+    const slug = eventSlug(event.slug);
+    if (!slug || seen.has(slug)) continue;
+    const best = pickBusiestMarket(event.markets);
+    if (!best) continue;
+    seen.add(slug);
+    const useDay = best.volume24 > 0;
+    const volume = useDay ? best.volume24 : best.lifetime;
+    matches.push({
+      id: `trend-${best.id}`,
+      title: best.title,
+      eventTitle: asString(event.title) ?? "",
+      url: `${EVENT_URL}/${slug}`,
+      outcomes: best.outcomes,
+      volumeLabel: formatVolumeUsd(volume),
+      volumeWindow: useDay ? "24h" : volume > 0 ? "lifetime" : null,
+      origin: "trending",
+      endDate: best.endDate ?? readIsoDate(event.endDate)
+    });
+    if (matches.length >= MAX_TRENDS) break;
   }
   return matches;
 }
@@ -296,18 +371,52 @@ async function fetchGamma(query, fetchImpl) {
   }
   return response.json();
 }
+async function fetchTrending(fetchImpl) {
+  const response = await fetchImpl(polymarketTrendingUrl(), {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": USER_AGENT
+    },
+    signal: AbortSignal.timeout(8e3)
+  });
+  if (!response.ok) {
+    throw new Error(`Polymarket trends returned ${response.status}`);
+  }
+  return selectTrendingMarkets(await response.json());
+}
 async function searchPolymarket(statement, fetchImpl = fetch) {
   const cleaned = cleanStatementQuery(statement);
   const raw = statement.replace(/\s+/g, " ").trim().slice(0, 180);
   const firstQuery = cleaned || raw;
-  if (firstQuery.length < 2) return { query: firstQuery, matches: [] };
-  const primary = selectLiveMatches(await fetchGamma(firstQuery, fetchImpl), firstQuery);
-  if (primary.length || !raw || raw.toLowerCase() === firstQuery.toLowerCase()) {
-    return { query: firstQuery, matches: primary };
+  if (firstQuery.length < 2) return { query: firstQuery, matches: [], trends: [] };
+  let query = firstQuery;
+  let matches = [];
+  let searchError = null;
+  try {
+    const primary = selectLiveMatches(await fetchGamma(firstQuery, fetchImpl), firstQuery);
+    if (primary.length || !raw || raw.toLowerCase() === firstQuery.toLowerCase()) {
+      matches = primary;
+    } else {
+      const secondary = selectLiveMatches(await fetchGamma(raw, fetchImpl), raw);
+      if (secondary.length) {
+        matches = secondary;
+        query = raw;
+      }
+    }
+  } catch (error) {
+    searchError = error;
   }
-  const secondary = selectLiveMatches(await fetchGamma(raw, fetchImpl), raw);
-  if (secondary.length) return { query: raw, matches: secondary };
-  return { query: firstQuery, matches: [] };
+  let trends = [];
+  let trendsError = null;
+  try {
+    trends = await fetchTrending(fetchImpl);
+  } catch (error) {
+    trendsError = error;
+  }
+  if (searchError && trendsError) {
+    throw searchError;
+  }
+  return { query, matches, trends };
 }
 
 // server/handlers/polymarket.ts

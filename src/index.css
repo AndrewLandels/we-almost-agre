@@ -493,6 +493,66 @@ button:focus-visible {
   margin-top: 16px;
 }
 
+.direction-explainer {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 4px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.direction-explainer p {
+  margin: 0;
+}
+
+.poly-card.engaged {
+  outline: 2px solid var(--sage);
+}
+
+.cadence-panel {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  display: grid;
+  gap: 10px;
+}
+
+.cadence-panel h3 {
+  margin: 4px 0 0;
+}
+
+.cadence-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cadence-choices button[aria-checked='true'] {
+  background: var(--sage);
+  color: white;
+  border-color: transparent;
+}
+
+.ping-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.ping-row input {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
 .match-note {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -550,6 +610,9 @@ button:focus-visible {
 .poly-actions {
   margin-top: auto;
   padding-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .suggest-card {

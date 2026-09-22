@@ -11,12 +11,19 @@ export type PolymarketMatch = {
   url: string
   outcomes: PolymarketOutcome[]
   volumeLabel: string | null
+  /** Lifetime volume for a search hit; last-day volume when the row is trending. */
+  volumeWindow: '24h' | 'lifetime' | null
+  origin: 'closest' | 'trending'
+  endDate: string | null
 }
 
 export type PolymarketSearchResult = {
   query: string
   matches: PolymarketMatch[]
+  trends: PolymarketMatch[]
 }
+
+export type CheckInCadence = 'daily' | 'weekly' | 'monthly'
 
 export type EquityOption = {
   symbolId: string
@@ -28,8 +35,12 @@ export type LiveOption =
   | { kind: 'equity'; id: string; symbolId: string; note: string }
 
 const GAMMA_SEARCH = 'https://gamma-api.polymarket.com/public-search'
+const GAMMA_EVENTS = 'https://gamma-api.polymarket.com/events'
 const EVENT_URL = 'https://polymarket.com/event'
 const MAX_MATCHES = 3
+const MAX_TRENDS = 4
+const LIVE_OPTION_CAP = 8
+const SOON_DAYS = 14
 const USER_AGENT = 'WeAlmostAgree/0.1 (educational market lens; +https://www.wealmostagree.com)'
 
 const STOP = new Set([
@@ -133,6 +144,18 @@ export function polymarketSearchUrl(query: string): string {
   return `${GAMMA_SEARCH}?${params.toString()}`
 }
 
+/** High last-day volume, not lifetime volume (that sort surfaces distant election contracts). */
+export function polymarketTrendingUrl(): string {
+  const params = new URLSearchParams({
+    active: 'true',
+    closed: 'false',
+    order: 'volume24hr',
+    ascending: 'false',
+    limit: '8',
+  })
+  return `${GAMMA_EVENTS}?${params.toString()}`
+}
+
 export function formatVolumeUsd(volume: number): string | null {
   if (!Number.isFinite(volume) || volume <= 0) return null
   const units = [
@@ -165,6 +188,14 @@ function eventSlug(value: unknown): string | null {
 
 function isClosed(record: Record<string, unknown>): boolean {
   return record.closed === true || record.archived === true
+}
+
+function readIsoDate(value: unknown): string | null {
+  const text = asString(value)
+  if (!text) return null
+  const time = Date.parse(text)
+  if (!Number.isFinite(time)) return null
+  return new Date(time).toISOString()
 }
 
 function overlapScore(query: string, text: string): number {
@@ -204,6 +235,7 @@ type RankedMarket = {
   overlap: number
   volume: number
   outcomes: PolymarketOutcome[]
+  endDate: string | null
 }
 
 function rankMarkets(query: string, markets: unknown): RankedMarket | null {
@@ -222,6 +254,7 @@ function rankMarkets(query: string, markets: unknown): RankedMarket | null {
       overlap,
       volume,
       outcomes: readOutcomes(market),
+      endDate: readIsoDate(market.endDate),
     }
     if (
       !best ||
@@ -265,8 +298,81 @@ export function selectLiveMatches(payload: unknown, query: string): PolymarketMa
       url: `${EVENT_URL}/${slug}`,
       outcomes: best.outcomes,
       volumeLabel: formatVolumeUsd(best.volume),
+      volumeWindow: best.volume > 0 ? 'lifetime' : null,
+      origin: 'closest',
+      endDate: best.endDate ?? readIsoDate(event.endDate),
     })
     if (matches.length >= MAX_MATCHES) break
+  }
+
+  return matches
+}
+
+type TrendPick = {
+  id: string
+  title: string
+  volume24: number
+  lifetime: number
+  outcomes: PolymarketOutcome[]
+  endDate: string | null
+}
+
+function pickBusiestMarket(markets: unknown): TrendPick | null {
+  if (!Array.isArray(markets)) return null
+  let best: TrendPick | null = null
+  for (const item of markets) {
+    const market = asRecord(item)
+    if (!market || isClosed(market) || market.active === false) continue
+    const title = asString(market.question) ?? asString(market.groupItemTitle)
+    if (!title) continue
+    const ranked: TrendPick = {
+      id: asString(market.id) ?? asString(market.slug) ?? title,
+      title,
+      volume24: asNumber(market.volume24hr) ?? 0,
+      lifetime: marketVolume(market) ?? 0,
+      outcomes: readOutcomes(market),
+      endDate: readIsoDate(market.endDate),
+    }
+    if (
+      !best ||
+      ranked.volume24 > best.volume24 ||
+      (ranked.volume24 === best.volume24 && ranked.lifetime > best.lifetime)
+    ) {
+      best = ranked
+    }
+  }
+  return best
+}
+
+/** Live events ordered by last-day volume. One open market per event — the busiest, not the first. */
+export function selectTrendingMarkets(payload: unknown): PolymarketMatch[] {
+  const root = asRecord(payload)
+  const events = Array.isArray(payload) ? payload : root && Array.isArray(root.events) ? root.events : []
+  const matches: PolymarketMatch[] = []
+  const seen = new Set<string>()
+
+  for (const item of events) {
+    const event = asRecord(item)
+    if (!event || isClosed(event) || event.active === false) continue
+    const slug = eventSlug(event.slug)
+    if (!slug || seen.has(slug)) continue
+    const best = pickBusiestMarket(event.markets)
+    if (!best) continue
+    seen.add(slug)
+    const useDay = best.volume24 > 0
+    const volume = useDay ? best.volume24 : best.lifetime
+    matches.push({
+      id: `trend-${best.id}`,
+      title: best.title,
+      eventTitle: asString(event.title) ?? '',
+      url: `${EVENT_URL}/${slug}`,
+      outcomes: best.outcomes,
+      volumeLabel: formatVolumeUsd(volume),
+      volumeWindow: useDay ? '24h' : volume > 0 ? 'lifetime' : null,
+      origin: 'trending',
+      endDate: best.endDate ?? readIsoDate(event.endDate),
+    })
+    if (matches.length >= MAX_TRENDS) break
   }
 
   return matches
@@ -286,6 +392,20 @@ async function fetchGamma(query: string, fetchImpl: typeof fetch): Promise<unkno
   return response.json() as Promise<unknown>
 }
 
+async function fetchTrending(fetchImpl: typeof fetch): Promise<PolymarketMatch[]> {
+  const response = await fetchImpl(polymarketTrendingUrl(), {
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': USER_AGENT,
+    },
+    signal: AbortSignal.timeout(8000),
+  })
+  if (!response.ok) {
+    throw new Error(`Polymarket trends returned ${response.status}`)
+  }
+  return selectTrendingMarkets(await response.json())
+}
+
 export async function searchPolymarket(
   statement: string,
   fetchImpl: typeof fetch = fetch,
@@ -293,22 +413,61 @@ export async function searchPolymarket(
   const cleaned = cleanStatementQuery(statement)
   const raw = statement.replace(/\s+/g, ' ').trim().slice(0, 180)
   const firstQuery = cleaned || raw
-  if (firstQuery.length < 2) return { query: firstQuery, matches: [] }
+  if (firstQuery.length < 2) return { query: firstQuery, matches: [], trends: [] }
 
-  const primary = selectLiveMatches(await fetchGamma(firstQuery, fetchImpl), firstQuery)
-  if (primary.length || !raw || raw.toLowerCase() === firstQuery.toLowerCase()) {
-    return { query: firstQuery, matches: primary }
+  let query = firstQuery
+  let matches: PolymarketMatch[] = []
+  let searchError: unknown = null
+  try {
+    const primary = selectLiveMatches(await fetchGamma(firstQuery, fetchImpl), firstQuery)
+    if (primary.length || !raw || raw.toLowerCase() === firstQuery.toLowerCase()) {
+      matches = primary
+    } else {
+      const secondary = selectLiveMatches(await fetchGamma(raw, fetchImpl), raw)
+      if (secondary.length) {
+        matches = secondary
+        query = raw
+      }
+    }
+  } catch (error) {
+    searchError = error
   }
 
-  const secondary = selectLiveMatches(await fetchGamma(raw, fetchImpl), raw)
-  if (secondary.length) return { query: raw, matches: secondary }
-  return { query: firstQuery, matches: [] }
+  let trends: PolymarketMatch[] = []
+  let trendsError: unknown = null
+  try {
+    trends = await fetchTrending(fetchImpl)
+  } catch (error) {
+    trendsError = error
+  }
+
+  if (searchError && trendsError) {
+    throw searchError
+  }
+
+  return { query, matches, trends }
 }
 
-/** About three things to look at: prediction markets first, then a share or index if we have one. */
-export function composeLiveOptions(matches: PolymarketMatch[], equities: EquityOption[]): LiveOption[] {
-  const polys = matches.slice(0, 3)
-  const shares = equities.filter((row) => row.symbolId).slice(0, 3)
+/** Daily when the linked market resolves within a fortnight; otherwise weekly. */
+export function suggestCadence(endDate: string | null, now = Date.now()): CheckInCadence {
+  if (!endDate) return 'weekly'
+  const end = Date.parse(endDate)
+  if (!Number.isFinite(end)) return 'weekly'
+  const days = (end - now) / 86_400_000
+  if (days >= 0 && days <= SOON_DAYS) return 'daily'
+  return 'weekly'
+}
+
+/** Closest markets, then shares, then trending markets that are not already listed. */
+export function composeLiveOptions(
+  matches: PolymarketMatch[],
+  equities: EquityOption[],
+  trends: PolymarketMatch[] = [],
+): LiveOption[] {
+  const polys = matches.filter((match) => match.origin !== 'trending').slice(0, MAX_MATCHES)
+  const shares = equities.filter((row) => row.symbolId).slice(0, MAX_MATCHES)
+  const seen = new Set(polys.map((match) => match.url))
+  const extra = trends.filter((match) => match.url && !seen.has(match.url)).slice(0, MAX_TRENDS)
   const toPoly = (match: PolymarketMatch): LiveOption => ({ kind: 'polymarket', id: match.id, match })
   const toEquity = (row: EquityOption): LiveOption => ({
     kind: 'equity',
@@ -317,19 +476,41 @@ export function composeLiveOptions(matches: PolymarketMatch[], equities: EquityO
     note: row.note,
   })
 
-  if (!polys.length) return shares.map(toEquity)
-  if (!shares.length) return polys.map(toPoly)
+  return [...polys.map(toPoly), ...shares.map(toEquity), ...extra.map(toPoly)].slice(0, LIVE_OPTION_CAP)
+}
 
-  const polyTake = polys.length >= 2 ? 2 : 1
-  const chosen: LiveOption[] = [
-    ...polys.slice(0, polyTake).map(toPoly),
-    ...shares.slice(0, 3 - polyTake).map(toEquity),
-  ]
-  for (const match of polys.slice(polyTake)) {
-    if (chosen.length >= 3) break
-    chosen.push(toPoly(match))
+function parseMatch(item: unknown, fallbackOrigin: PolymarketMatch['origin']): PolymarketMatch | null {
+  const match = asRecord(item)
+  if (!match) return null
+  const title = asString(match.title)
+  const url = asString(match.url)
+  const id = asString(match.id)
+  if (!title || !url || !id || !url.startsWith(`${EVENT_URL}/`)) return null
+  const outcomes: PolymarketOutcome[] = []
+  if (Array.isArray(match.outcomes)) {
+    for (const outcome of match.outcomes) {
+      const row = asRecord(outcome)
+      if (!row) continue
+      const label = asString(row.label)
+      const price = asNumber(row.price)
+      const percentLabel = asString(row.percentLabel)
+      if (!label || price === null || !percentLabel) continue
+      outcomes.push({ label, price, percentLabel })
+    }
   }
-  return chosen.slice(0, 3)
+  const origin = match.origin === 'trending' || match.origin === 'closest' ? match.origin : fallbackOrigin
+  const volumeWindow = match.volumeWindow === '24h' || match.volumeWindow === 'lifetime' ? match.volumeWindow : null
+  return {
+    id,
+    title,
+    eventTitle: asString(match.eventTitle) ?? '',
+    url,
+    outcomes,
+    volumeLabel: asString(match.volumeLabel),
+    volumeWindow,
+    origin,
+    endDate: readIsoDate(match.endDate),
+  }
 }
 
 export function readPolymarketResponse(payload: unknown): PolymarketSearchResult {
@@ -337,34 +518,11 @@ export function readPolymarketResponse(payload: unknown): PolymarketSearchResult
   if (!record || typeof record.query !== 'string' || !Array.isArray(record.matches)) {
     throw new Error('Polymarket search shape was unexpected.')
   }
-  const matches: PolymarketMatch[] = []
-  for (const item of record.matches) {
-    const match = asRecord(item)
-    if (!match) continue
-    const title = asString(match.title)
-    const url = asString(match.url)
-    const id = asString(match.id)
-    if (!title || !url || !id || !url.startsWith(`${EVENT_URL}/`)) continue
-    const outcomes: PolymarketOutcome[] = []
-    if (Array.isArray(match.outcomes)) {
-      for (const outcome of match.outcomes) {
-        const row = asRecord(outcome)
-        if (!row) continue
-        const label = asString(row.label)
-        const price = asNumber(row.price)
-        const percentLabel = asString(row.percentLabel)
-        if (!label || price === null || !percentLabel) continue
-        outcomes.push({ label, price, percentLabel })
-      }
-    }
-    matches.push({
-      id,
-      title,
-      eventTitle: asString(match.eventTitle) ?? '',
-      url,
-      outcomes,
-      volumeLabel: asString(match.volumeLabel),
-    })
-  }
-  return { query: record.query, matches }
+  const matches = record.matches
+    .map((item) => parseMatch(item, 'closest'))
+    .filter((item): item is PolymarketMatch => Boolean(item))
+  const trends = Array.isArray(record.trends)
+    ? record.trends.map((item) => parseMatch(item, 'trending')).filter((item): item is PolymarketMatch => Boolean(item))
+    : []
+  return { query: record.query, matches, trends }
 }

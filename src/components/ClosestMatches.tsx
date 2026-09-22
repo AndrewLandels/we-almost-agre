@@ -1,21 +1,34 @@
-import { useEffect, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ASSET_CLASS_LABEL, getSymbol } from '../data/universe'
 import {
+  CADENCE_LEAD,
+  CADENCE_SOON,
+  CADENCE_TITLE,
+  CHECK_IN_THIS,
   CLOSEST_EMPTY,
   CLOSEST_ERROR,
   CLOSEST_EYEBROW,
   CLOSEST_LENS,
   CLOSEST_LOADING,
   CLOSEST_TITLE,
+  LONG_SHORT_NOTE,
+  LONG_YES,
+  NOTIFY_COMING,
   PAPER_TRACK_FRAMING,
   PAPER_TRACK_THIS,
+  PING_HINT,
+  PING_LABEL,
+  PING_SAVED,
   POLYMARKET_RISK,
   POLYMARKET_VIEW,
+  SHORT_NO,
 } from '../lib/markets/copy'
 import {
   composeLiveOptions,
   readPolymarketResponse,
+  suggestCadence,
+  type CheckInCadence,
   type LiveOption,
   type PolymarketMatch,
   type PolymarketSearchResult,
@@ -23,6 +36,13 @@ import {
 import type { ExpressionMapping } from '../lib/markets/types'
 
 type Status = 'loading' | 'ready' | 'error'
+
+const PING_KEY = 'waa-paper-ping'
+const CADENCES: { id: CheckInCadence; label: string }[] = [
+  { id: 'daily', label: 'Daily' },
+  { id: 'weekly', label: 'Weekly' },
+  { id: 'monthly', label: 'Monthly' },
+]
 
 function oddsClass(label: string): string {
   const name = label.toLowerCase()
@@ -35,14 +55,50 @@ function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === 'AbortError'
 }
 
+function isYesNo(match: PolymarketMatch): boolean {
+  const labels = match.outcomes.map((outcome) => outcome.label.toLowerCase())
+  return labels.includes('yes') && labels.includes('no')
+}
+
+function polymarketLabel(match: PolymarketMatch): string {
+  const side = isYesNo(match) ? 'Yes/No bet' : 'Live bet'
+  const origin = match.origin === 'trending' ? 'trending' : 'closest'
+  return `${side} · ${origin}`
+}
+
+function resolveLabel(endDate: string | null): string | null {
+  if (!endDate) return null
+  const time = Date.parse(endDate)
+  if (!Number.isFinite(time)) return null
+  const text = new Date(time).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+  return `Resolves ${text}`
+}
+
+function volumeLine(match: PolymarketMatch): string | null {
+  if (!match.volumeLabel) return null
+  if (match.volumeWindow === '24h') return `About ${match.volumeLabel} traded in the last day.`
+  return `Volume about ${match.volumeLabel}.`
+}
+
 export function ClosestMatches({ mapping }: { mapping: ExpressionMapping }) {
   const [status, setStatus] = useState<Status>('loading')
   const [result, setResult] = useState<PolymarketSearchResult | null>(null)
+  const [engagedId, setEngagedId] = useState<string | null>(null)
+  const [cadence, setCadence] = useState<CheckInCadence>('weekly')
+  const [email, setEmail] = useState('')
+  const [pingNote, setPingNote] = useState<string | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
     setStatus('loading')
     setResult(null)
+    setEngagedId(null)
+    setCadence('weekly')
+    setPingNote(null)
 
     const params = new URLSearchParams({ q: mapping.original })
     fetch(`/api/polymarket?${params.toString()}`, { signal: controller.signal })
@@ -65,7 +121,39 @@ export function ClosestMatches({ mapping }: { mapping: ExpressionMapping }) {
   const options =
     status === 'loading'
       ? []
-      : composeLiveOptions(status === 'ready' ? (result?.matches ?? []) : [], mapping.suggestions)
+      : composeLiveOptions(
+          status === 'ready' ? (result?.matches ?? []) : [],
+          mapping.suggestions,
+          status === 'ready' ? (result?.trends ?? []) : [],
+        )
+
+  const engaged = options.find((option) => option.id === engagedId) ?? null
+  const engagedEnd = engaged?.kind === 'polymarket' ? engaged.match.endDate : null
+  const soon = suggestCadence(engagedEnd) === 'daily'
+
+  function engage(option: LiveOption) {
+    setEngagedId(option.id)
+    const end = option.kind === 'polymarket' ? option.match.endDate : null
+    setCadence(suggestCadence(end))
+    setPingNote(null)
+  }
+
+  function onNotify(event: FormEvent) {
+    event.preventDefault()
+    const payload = {
+      email: email.trim(),
+      cadence,
+      statement: mapping.original,
+      optionId: engagedId,
+      savedAt: new Date().toISOString(),
+    }
+    try {
+      window.localStorage.setItem(PING_KEY, JSON.stringify(payload))
+    } catch {
+      // Private mode can block storage. The note below still tells the truth.
+    }
+    setPingNote(PING_SAVED)
+  }
 
   return (
     <section className="closest-matches" aria-labelledby="closest-title" aria-busy={status === 'loading'}>
@@ -81,9 +169,15 @@ export function ClosestMatches({ mapping }: { mapping: ExpressionMapping }) {
         {CLOSEST_LENS} {POLYMARKET_RISK}
       </p>
 
+      <div className="direction-explainer">
+        <p>{LONG_YES}</p>
+        <p>{SHORT_NO}</p>
+        <p className="hint">{LONG_SHORT_NOTE}</p>
+      </div>
+
       {status === 'loading' ? (
         <div className="closest-grid" role="status">
-          {[0, 1, 2].map((slot) => (
+          {[0, 1, 2, 3, 4, 5].map((slot) => (
             <article key={slot} className="card poly-card match-skeleton" aria-hidden="true">
               <span className="pill">Live match</span>
               <p className="hint">{CLOSEST_LOADING}</p>
@@ -111,12 +205,65 @@ export function ClosestMatches({ mapping }: { mapping: ExpressionMapping }) {
           <div className="closest-grid">
             {options.map((option) =>
               option.kind === 'polymarket' ? (
-                <PolymarketCard key={option.id} match={option.match} />
+                <PolymarketCard
+                  key={option.id}
+                  match={option.match}
+                  engaged={option.id === engagedId}
+                  onEngage={() => engage(option)}
+                />
               ) : (
-                <EquityCard key={option.id} option={option} statementId={mapping.id} />
+                <EquityCard
+                  key={option.id}
+                  option={option}
+                  statementId={mapping.id}
+                  engaged={option.id === engagedId}
+                  onEngage={() => engage(option)}
+                />
               ),
             )}
           </div>
+          <form className="cadence-panel" onSubmit={onNotify}>
+            <div>
+              <p className="eyebrow">{CADENCE_TITLE}</p>
+              <h3>{PING_LABEL}</h3>
+              <p className="muted">{soon && engaged ? CADENCE_SOON : CADENCE_LEAD}</p>
+            </div>
+            <div className="cadence-choices" role="radiogroup" aria-label="Check-in cadence">
+              {CADENCES.map((choice) => (
+                <button
+                  key={choice.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={cadence === choice.id}
+                  className="preset"
+                  onClick={() => {
+                    setCadence(choice.id)
+                    setPingNote(null)
+                  }}
+                >
+                  {choice.label}
+                </button>
+              ))}
+            </div>
+            <label className="field" htmlFor="paper-ping-email">
+              Email for a later ping
+            </label>
+            <div className="ping-row">
+              <input
+                id="paper-ping-email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+              <button className="btn secondary" type="submit">
+                {NOTIFY_COMING}
+              </button>
+            </div>
+            <p className="hint">{pingNote ?? PING_HINT}</p>
+          </form>
         </>
       ) : null}
 
@@ -130,11 +277,21 @@ export function ClosestMatches({ mapping }: { mapping: ExpressionMapping }) {
   )
 }
 
-function PolymarketCard({ match }: { match: PolymarketMatch }) {
+function PolymarketCard({
+  match,
+  engaged,
+  onEngage,
+}: {
+  match: PolymarketMatch
+  engaged: boolean
+  onEngage: () => void
+}) {
   const showEvent = match.eventTitle && match.eventTitle !== match.title
+  const resolves = resolveLabel(match.endDate)
+  const volume = volumeLine(match)
   return (
-    <article className="card poly-card">
-      <span className="pill">Polymarket</span>
+    <article className={engaged ? 'card poly-card engaged' : 'card poly-card'}>
+      <span className={match.origin === 'trending' ? 'pill amber' : 'pill'}>{polymarketLabel(match)}</span>
       <h3>{match.title}</h3>
       {showEvent ? <p className="hint">{match.eventTitle}</p> : null}
       {match.outcomes.length ? (
@@ -149,8 +306,12 @@ function PolymarketCard({ match }: { match: PolymarketMatch }) {
       ) : (
         <p className="hint">Prices were not included with this result.</p>
       )}
-      {match.volumeLabel ? <p className="hint">Volume about {match.volumeLabel}.</p> : null}
+      {volume ? <p className="hint">{volume}</p> : null}
+      {resolves ? <p className="hint">{resolves}</p> : null}
       <p className="poly-actions">
+        <button type="button" className="btn small" onClick={onEngage}>
+          {CHECK_IN_THIS}
+        </button>
         <a
           className="btn secondary small"
           href={match.url}
@@ -168,22 +329,29 @@ function PolymarketCard({ match }: { match: PolymarketMatch }) {
 function EquityCard({
   option,
   statementId,
+  engaged,
+  onEngage,
 }: {
   option: Extract<LiveOption, { kind: 'equity' }>
   statementId: string
+  engaged: boolean
+  onEngage: () => void
 }) {
   const symbol = getSymbol(option.symbolId)
   if (!symbol) return null
   return (
-    <article className="card poly-card">
-      <span className="pill amber">{ASSET_CLASS_LABEL[symbol.assetClass]}</span>
+    <article className={engaged ? 'card poly-card engaged' : 'card poly-card'}>
+      <span className="pill demo">Long/short · {ASSET_CLASS_LABEL[symbol.assetClass]}</span>
       <h3>
         {symbol.displaySymbol}
         <span className="paper-name"> · {symbol.name}</span>
       </h3>
       <p className="match-note">{option.note}</p>
       <p className="poly-actions">
-        <Link className="btn small" to={`/express/${statementId}?symbol=${symbol.id}`}>
+        <button type="button" className="btn small" onClick={onEngage}>
+          {CHECK_IN_THIS}
+        </button>
+        <Link className="btn secondary small" to={`/express/${statementId}?symbol=${symbol.id}`}>
           {PAPER_TRACK_THIS}
         </Link>
       </p>
