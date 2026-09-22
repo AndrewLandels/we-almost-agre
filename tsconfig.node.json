@@ -11,5 +11,5 @@
     "noEmit": true,
     "strict": true
   },
-  "include": ["vite.config.ts", "vite.quote-plugin.ts", "vite.polymarket-plugin.ts", "api/quote.ts", "api/polymarket.ts"]
+  "include": ["vite.config.ts", "vite.quote-plugin.ts", "vite.polymarket-plugin.ts"]
 }
