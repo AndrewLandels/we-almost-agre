@@ -132,6 +132,63 @@ describe('live Polymarket selection', () => {
     ])
   })
 
+  it('hides a one-word overlap when the sentence has a fuller topic', () => {
+    expect(
+      selectLiveMatches(
+        {
+          events: [
+            {
+              title: 'Another US debt downgrade before 2027?',
+              slug: 'another-us-debt-downgrade-before-2027',
+              closed: false,
+              active: true,
+              markets: [
+                {
+                  id: 'debt',
+                  question: 'Another US debt downgrade before 2027?',
+                  outcomes: '["Yes","No"]',
+                  outcomePrices: '["0.08","0.92"]',
+                  volumeNum: 13700,
+                  closed: false,
+                  active: true,
+                },
+              ],
+            },
+          ],
+        },
+        'US economy down',
+      ),
+    ).toEqual([])
+  })
+
+  it('keeps a match when the sentence is a single topic', () => {
+    const matches = selectLiveMatches(
+      {
+        events: [
+          {
+            title: 'When will Bitcoin hit $150k?',
+            slug: 'when-will-bitcoin-hit-150k',
+            closed: false,
+            active: true,
+            markets: [
+              {
+                id: 'btc',
+                question: 'Will Bitcoin hit $150k by December 31, 2026?',
+                outcomes: '["Yes","No"]',
+                outcomePrices: '["0.025","0.975"]',
+                volumeNum: 100,
+                closed: false,
+                active: true,
+              },
+            ],
+          },
+        ],
+      },
+      'Bitcoin',
+    )
+    expect(matches).toHaveLength(1)
+  })
+
   it('returns nothing when every hit is closed', () => {
     expect(
       selectLiveMatches(

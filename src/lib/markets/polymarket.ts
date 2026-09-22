@@ -227,13 +227,16 @@ function rankMarkets(query: string, markets: unknown): RankedMarket | null {
 
 /**
  * Gamma's keep_closed_markets flag still returns resolved events.
- * Keep only open events whose question shares a real word with the query.
+ * Keep an open event only when it shares two topic words with the query
+ * (one word is enough when the query itself is a single topic).
  */
 export function selectLiveMatches(payload: unknown, query: string): PolymarketMatch[] {
   const root = asRecord(payload)
   const events = root && Array.isArray(root.events) ? root.events : []
   const matches: PolymarketMatch[] = []
   const seen = new Set<string>()
+  const querySize = new Set(significantTokens(query)).size
+  const minimumOverlap = querySize <= 1 ? 1 : 2
 
   for (const item of events) {
     const event = asRecord(item)
@@ -244,7 +247,7 @@ export function selectLiveMatches(payload: unknown, query: string): PolymarketMa
     const best = rankMarkets(query, event.markets)
     if (!best) continue
     const overlap = Math.max(best.overlap, overlapScore(query, eventTitle))
-    if (overlap < 1) continue
+    if (overlap < minimumOverlap) continue
     seen.add(slug)
     matches.push({
       id: best.id,
