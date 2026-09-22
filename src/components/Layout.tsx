@@ -39,7 +39,7 @@ export function Layout() {
               <NavLink to="/book">Book</NavLink>
               <NavLink to="/deeper">Go deeper</NavLink>
             </nav>
-            <NavLink className="points-chip" to="/book" title="Paper-book equity — fake money only">
+            <NavLink className="points-chip" to="/book" title="Paper book — fake money on a market expression">
               <span aria-hidden="true" />
               Book · {formatUnits(equity, 0)}
             </NavLink>

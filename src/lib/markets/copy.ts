@@ -36,7 +36,7 @@ export const POLYMARKET_VIEW = 'View on Polymarket'
 export const PAPER_TRACK_THIS = 'Paper-track this'
 
 export const PAPER_TRACK_FRAMING =
-  'Paper P&L is fake money on a real-world expression of the view — a prediction market, a share, an index, or a similar bet — not a single S&P proxy, and not an order placed for you. Share and index lines are marked here to a public price. Prediction-market prices stay on the venue.'
+  'A paper position is linked to a real-world expression of the view: a Polymarket market, a stock or index, a bet, or something similar — not only an S&P-style proxy. Paper P&L is fake money marked against that kind of expression, for curiosity. It is not an order, and not advice to bet.'
 
 export const STARTING_PAPER_CASH = 10_000
 

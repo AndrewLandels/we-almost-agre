@@ -171,8 +171,8 @@ export function HomePage() {
         <article className="step">
           <strong>3. Paper track</strong>
           <p>
-            Fake money on the expression you pick, marked to a public price. Not only the S&amp;P. No
-            cash-out. No prizes. Not an order.
+            Paper P&amp;L follows the expression you pick — a Polymarket market, a stock or index, a bet,
+            or similar. Fake money. Not only an S&amp;P proxy. No cash-out. No prizes.
           </p>
         </article>
         <article className="step">
