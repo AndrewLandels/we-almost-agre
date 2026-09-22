@@ -17,8 +17,8 @@ export function AboutPage() {
       <h2>What this run does</h2>
       <ul>
         <li>
-          Homepage loop: statement → about three closest live matches (prediction markets, shares,
-          indices, and similar) → paper long/short on a shared book. Not a single S&amp;P proxy.
+          Homepage loop: statement → several closest and trending live matches (prediction markets,
+          shares, indices, and similar) → paper long/short on a shared book. Not a single S&amp;P proxy.
         </li>
         <li>
           Starter universe of major-index ETF proxies, liquid shares, and commodity / Bitcoin

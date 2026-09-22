@@ -18,7 +18,34 @@ export const CLOSEST_EYEBROW = 'Ways this view shows up'
 export const CLOSEST_TITLE = 'Closest live matches'
 
 export const CLOSEST_LENS =
-  'About three options to look at. Curiosity only — not a recommendation, and not personal investment advice.'
+  'Several directions to look at: closest live matches, markets people are trading today, and a share or index when we have one. Curiosity only — not a recommendation, and not personal investment advice.'
+
+export const LONG_YES =
+  'Long, or Yes: paper P&L benefits if the price or the Yes odds move up.'
+
+export const SHORT_NO =
+  'Short, or No: paper P&L benefits if the price falls, or the No side is the one that finishes ahead.'
+
+export const LONG_SHORT_NOTE =
+  'Mechanics for curiosity. Not a suggestion to take either side.'
+
+export const CHECK_IN_THIS = 'Check in on this'
+
+export const CADENCE_TITLE = 'Check in later'
+
+export const CADENCE_LEAD =
+  'Pick a cadence for a paper progress look-back. Weekly suits most gut statements. Daily fits a market that resolves soon.'
+
+export const CADENCE_SOON = 'Daily, because this market resolves within a fortnight.'
+
+export const PING_LABEL = 'Get a paper progress ping'
+
+export const PING_HINT =
+  'Track paper P&L with a later live update. Email delivery is not switched on yet.'
+
+export const NOTIFY_COMING = 'Notify me (coming soon)'
+
+export const PING_SAVED = 'Saved in this browser only. Live email updates are not switched on yet.'
 
 export const POLYMARKET_RISK =
   'Prediction markets may be restricted where you live. If you leave this site, capital is at risk.'
