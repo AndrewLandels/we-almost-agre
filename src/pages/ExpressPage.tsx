@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { FactualPanel } from '../components/FactualPanel'
 import { PaperTradePanel } from '../components/PaperTradePanel'
+import { PolymarketMatches } from '../components/PolymarketMatches'
 import { SymbolPicker } from '../components/SymbolPicker'
 import { ASSET_CLASS_LABEL, getSymbol } from '../data/universe'
 import { usePaperBook } from '../hooks/usePaperBook'
@@ -137,6 +138,8 @@ export function ExpressPage() {
           <SymbolPicker selectedId={chosen} onPick={(symbol) => setChosen(symbol.id)} />
         </div>
       </section>
+
+      <PolymarketMatches statement={mapping.original} />
 
       {chosen ? <PaperTradePanel symbolId={chosen} statementId={mapping.id} /> : null}
 

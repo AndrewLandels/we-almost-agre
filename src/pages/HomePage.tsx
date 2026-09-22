@@ -59,7 +59,10 @@ export function HomePage() {
             maxLength={400}
           />
           <div className="form-row">
-            <p className="hint">First-pass heuristic, labelled on the next page. Ready for a later model.</p>
+            <p className="hint">
+              First-pass heuristic, labelled on the next page. Closest live Polymarket markets sit beside
+              the paper expression.
+            </p>
             <button className="btn" type="submit" disabled={!isMappable(draft)}>
               See how this is often expressed
             </button>

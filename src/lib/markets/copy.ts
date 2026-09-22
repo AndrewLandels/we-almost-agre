@@ -13,6 +13,26 @@ export const SUGGESTION_PREFACE = 'Common ways people express views like this'
 
 export const PAPER_ONLY_LABEL = 'Simulation · not a real trade · not advice'
 
+export const POLYMARKET_EYEBROW = 'Live prediction markets'
+
+export const POLYMARKET_TITLE = 'Closest live Polymarket markets'
+
+export const POLYMARKET_LENS =
+  'Closest matches for curiosity, not recommendations. This is not personal investment advice.'
+
+export const POLYMARKET_RISK =
+  'Prediction markets may be restricted where you live. If you leave this site, capital is at risk.'
+
+export const POLYMARKET_EMPTY =
+  'No close live market turned up for this sentence. Many gut statements do not sit on an open Polymarket market.'
+
+export const POLYMARKET_ERROR =
+  'The live market search could not be reached just now. The paper expression on this page still stands.'
+
+export const POLYMARKET_LOADING = 'Looking for live markets that sit near this sentence.'
+
+export const POLYMARKET_VIEW = 'View on Polymarket'
+
 export const STARTING_PAPER_CASH = 10_000
 
 export const PAPER_SIZE_PRESETS = [250, 500, 1000, 2500] as const
