@@ -37,12 +37,16 @@ const OIL = /\b(oil|crude|opec|petrol price|gasoline)\b/i
 const COPPER = /\b(copper)\b/i
 const AI = /\b(\bai\b|artificial intelligence|nvidia|gpu|chipmaker)\b/i
 const INFLATION = /\b(inflation|cost of living|prices? (are|keep) (up|rising|high))\b/i
+const RECESSION = /\brecession\b/i
+const RATES =
+  /\b(interest rates?|base rate|bank rate|fed funds|rates stay|rates remain|high rates)\b/i
+const HOUSING = /\b(house prices?|home prices?|housing market|property prices?)\b/i
 
 const RULES: Rule[] = [
   {
     id: 'us-economy-down',
     topicLabel: 'US economy',
-    test: (haystack) => US_DOWN.test(haystack) || ECONOMY_DOWN.test(haystack),
+    test: (haystack) => US_DOWN.test(haystack) || ECONOMY_DOWN.test(haystack) || RECESSION.test(haystack),
     build: () => ({
       sharedPremise:
         'Most people prefer a healthy economy and care about jobs, prices, and a measure of stability.',
@@ -282,6 +286,54 @@ const RULES: Rule[] = [
         suggestion(
           'SPY',
           'Broad equities sometimes reprice with the inflation story as well. The S&P 500 via SPY is in the starter book as a gauge, not a forecast.',
+        ),
+      ],
+    }),
+  },
+  {
+    id: 'rates-high',
+    topicLabel: 'Interest rates',
+    test: (haystack) => RATES.test(haystack),
+    build: () => ({
+      sharedPremise:
+        'People notice what they pay to borrow, and what cash earns, even when they disagree about the next move.',
+      contestedExpression: 'From here, interest rates stay high for longer.',
+      framing:
+        'A rates view is sometimes expressed through bank shares, which sit next to lending, or through broad equities. Neither instrument is the policy rate itself.',
+      suggestions: [
+        suggestion(
+          'JPM',
+          'Large listed banks are one place a rates conversation shows up. JPMorgan Chase is in the starter book as an ordinary share — a neighbouring expression, not the base rate.',
+        ),
+        suggestion(
+          'SPY',
+          'Broad equities sometimes reprice when the rate path changes. Paper marks use SPY as a liquid S&P 500 proxy.',
+        ),
+        suggestion(
+          'GLD',
+          'Gold is a neighbouring expression when the conversation turns to what cash still buys. Paper marks use GLD as a bullion proxy.',
+        ),
+      ],
+    }),
+  },
+  {
+    id: 'house-prices',
+    topicLabel: 'House prices',
+    test: (haystack) => HOUSING.test(haystack),
+    build: () => ({
+      sharedPremise:
+        'A home is shelter and, for many households, the largest asset that comes up at the kitchen table.',
+      contestedExpression: 'From here, house prices fall.',
+      framing:
+        'The starter book has no house-price index. Bank shares and broad equities are neighbouring expressions people sometimes look at. They are not house prices.',
+      suggestions: [
+        suggestion(
+          'JPM',
+          'Mortgage lending sits next to house prices. JPMorgan Chase is in the starter book as a large listed bank — a neighbour of the housing conversation, not a house-price index.',
+        ),
+        suggestion(
+          'SPY',
+          'A weaker, broader companion is the S&P 500 via SPY. It is a habit of the paper book when there is no direct instrument, not a translation of house prices.',
         ),
       ],
     }),

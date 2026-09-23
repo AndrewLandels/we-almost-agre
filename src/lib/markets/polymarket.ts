@@ -40,6 +40,7 @@ const STOP = new Set([
   'just', 'really', 'very', 'so', 'than', 'then', 'with', 'from', 'by', 'at', 'as',
   'into', 'about', 'over', 'under', 'again', 'here', 'there', 'when', 'what', 'who',
   'how', 'why', 'do', 'does', 'did', 'doing', 'have', 'has', 'had', 'not',
+  'heading',
   'going', 'gonna', 'wanna', 'please', 'like',
   'invest', 'investing', 'investment', 'investments',
   'buy', 'sell', 'buying', 'selling', 'trade', 'trading', 'hold', 'holding',
@@ -82,6 +83,8 @@ function stem(token: string): string {
 
 function normalizeForTokens(text: string): string {
   return text
+    .replace(/\b(\p{L}+)['’](?:re|ve|ll|d|m)\b/giu, '$1')
+    .replace(/\b(\p{L}+)n['’]t\b/giu, '$1')
     .replace(/(\p{L})\.(?=\p{L})/gu, '$1')
     .replace(/(\d),(?=\d)/g, '$1')
     .replace(/[$£€]/g, '')

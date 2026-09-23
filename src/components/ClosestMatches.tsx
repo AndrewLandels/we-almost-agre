@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ASSET_CLASS_LABEL, getSymbol } from '../data/universe'
+import { usePaperBook } from '../hooks/usePaperBook'
 import {
   CLOSEST_EMPTY,
   CLOSEST_ERROR,
-  CLOSEST_EYEBROW,
-  CLOSEST_LENS,
   CLOSEST_LOADING,
   CLOSEST_TITLE,
-  PAPER_TRACK_FRAMING,
-  PAPER_TRACK_THIS,
+  LONG_SHORT_LINE,
   POLYMARKET_RISK,
   POLYMARKET_VIEW,
 } from '../lib/markets/copy'
@@ -20,7 +18,7 @@ import {
   type PolymarketMatch,
   type PolymarketSearchResult,
 } from '../lib/markets/polymarket'
-import type { ExpressionMapping } from '../lib/markets/types'
+import type { ExpressionMapping, PaperSide } from '../lib/markets/types'
 
 type Status = 'loading' | 'ready' | 'error'
 
@@ -70,16 +68,10 @@ export function ClosestMatches({ mapping }: { mapping: ExpressionMapping }) {
   return (
     <section className="closest-matches" aria-labelledby="closest-title" aria-busy={status === 'loading'}>
       <div className="section-head tight">
-        <div>
-          <p className="eyebrow">{CLOSEST_EYEBROW}</p>
-          <h2 id="closest-title" tabIndex={-1}>
-            {CLOSEST_TITLE}
-          </h2>
-        </div>
+        <h2 id="closest-title" tabIndex={-1}>
+          {CLOSEST_TITLE}
+        </h2>
       </div>
-      <p className="muted">
-        {CLOSEST_LENS} {POLYMARKET_RISK}
-      </p>
 
       {status === 'loading' ? (
         <div className="closest-grid" role="status">
@@ -120,12 +112,19 @@ export function ClosestMatches({ mapping }: { mapping: ExpressionMapping }) {
         </>
       ) : null}
 
-      <p className="muted closest-paper">{PAPER_TRACK_FRAMING}</p>
-      <p>
-        <Link className="btn secondary small" to={`/express/${mapping.id}`}>
-          Open the full paper page
-        </Link>
-      </p>
+      {options.some((option) => option.kind === 'equity') ? (
+        <p className="muted closest-paper">{LONG_SHORT_LINE}</p>
+      ) : null}
+      {options.some((option) => option.kind === 'polymarket') ? (
+        <p className="hint closest-paper">{POLYMARKET_RISK}</p>
+      ) : null}
+      {status !== 'loading' ? (
+        <p className="closest-more">
+          <Link className="text-link" to={`/express/${mapping.id}`}>
+            Full paper page
+          </Link>
+        </p>
+      ) : null}
     </section>
   )
 }
@@ -174,6 +173,42 @@ function EquityCard({
 }) {
   const symbol = getSymbol(option.symbolId)
   if (!symbol) return null
+  return <EquityActions symbolId={symbol.id} note={option.note} statementId={statementId} />
+}
+
+function EquityActions({
+  symbolId,
+  note,
+  statementId,
+}: {
+  symbolId: string
+  note: string
+  statementId: string
+}) {
+  const symbol = getSymbol(symbolId)
+  const { quotes, openPosition, watchSymbols } = usePaperBook()
+  const [message, setMessage] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    watchSymbols([symbolId])
+  }, [symbolId, watchSymbols])
+
+  if (!symbol) return null
+  const quote = quotes[symbolId]
+
+  function openSide(side: PaperSide) {
+    setMessage(null)
+    setFailed(false)
+    try {
+      openPosition({ symbolId, side, notional: 1000, statementId })
+      setMessage(`Paper ${side} opened for 1,000 units. Not an order.`)
+    } catch (err) {
+      setFailed(true)
+      setMessage(err instanceof Error ? err.message : 'Could not open that paper line.')
+    }
+  }
+
   return (
     <article className="card poly-card">
       <span className="pill amber">{ASSET_CLASS_LABEL[symbol.assetClass]}</span>
@@ -181,12 +216,27 @@ function EquityCard({
         {symbol.displaySymbol}
         <span className="paper-name"> · {symbol.name}</span>
       </h3>
-      <p className="match-note">{option.note}</p>
-      <p className="poly-actions">
-        <Link className="btn small" to={`/express/${statementId}?symbol=${symbol.id}`}>
-          {PAPER_TRACK_THIS}
-        </Link>
-      </p>
+      <p className="match-note">{note}</p>
+      <div className="sides">
+        <button
+          type="button"
+          className="btn sage small"
+          onClick={() => openSide('long')}
+          disabled={!quote}
+        >
+          Paper long
+        </button>
+        <button
+          type="button"
+          className="btn amber small"
+          onClick={() => openSide('short')}
+          disabled={!quote}
+        >
+          Paper short
+        </button>
+      </div>
+      {!quote ? <p className="hint">Waiting for a paper mark.</p> : null}
+      {message ? <p className={failed ? 'alert' : 'hint'}>{message}</p> : null}
     </article>
   )
 }

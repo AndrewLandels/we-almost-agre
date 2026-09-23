@@ -38,6 +38,10 @@ export const PAPER_TRACK_THIS = 'Paper-track this'
 export const PAPER_TRACK_FRAMING =
   'A paper position is linked to a real-world expression of the view: a Polymarket market, a stock or index, a bet, or something similar — not only an S&P-style proxy. Paper P&L is fake money marked against that kind of expression, for curiosity. It is not an order, and not advice to bet.'
 
+/** Shown only after live matches, never on the empty homepage. */
+export const LONG_SHORT_LINE =
+  'A paper long improves if that mark rises; a paper short improves if it falls. Fake money. Not advice.'
+
 export const STARTING_PAPER_CASH = 10_000
 
 export const PAPER_SIZE_PRESETS = [250, 500, 1000, 2500] as const
