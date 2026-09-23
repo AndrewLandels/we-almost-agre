@@ -28,14 +28,12 @@ Then open the URL Vite prints (usually `http://localhost:5173`).
 
 No API key is required for the default delayed Yahoo Finance feed.
 
-## Try the flagship example
+## Try the homepage
 
-1. Open `/`.
-2. Leave the placeholder, or paste: **The US economy is going down the toilet.**
-3. You land on `/express/us-economy-down`: shared premise, contested expression, suggested symbols (SPY / QQQ / IWM / CPER), a paper long/short ticket, and an educational instrument-types panel.
+1. Open `/`. The first screen is one sentence, the statement box, three kitchen-table examples, and a short paper line.
+2. Press Enter, or choose a chip such as **We're heading for a recession**.
+3. You stay on `/` and see a few closest live markets. Paper long and paper short sit on the share or index cards. The fuller paper page is still at `/express/:id`.
 4. Open `/book` to see the shared paper ledger across every symbol.
-
-Or hit the **US economy** chip under the homepage form.
 
 ## Main routes
 

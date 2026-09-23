@@ -4,6 +4,7 @@ import {
   CLOSEST_ERROR,
   CLOSEST_LENS,
   CLOSEST_TITLE,
+  LONG_SHORT_LINE,
   PAPER_TRACK_FRAMING,
   POLYMARKET_RISK,
 } from './copy'
@@ -101,6 +102,7 @@ describe('statement query cleanup', () => {
     expect(cleanStatementQuery('You should invest in Bitcoin.')).toBe('Bitcoin')
     expect(cleanStatementQuery('Electric cars are shit.')).toBe('Electric cars')
     expect(cleanStatementQuery('The US economy is going down the toilet.')).toBe('US economy down')
+    expect(cleanStatementQuery("We're heading for a recession")).toBe('recession')
   })
 
   it('joins initials and keeps an empty sentence empty', () => {
@@ -356,7 +358,7 @@ describe('compose live options', () => {
 
 describe('Polymarket copy', () => {
   it('stays on the non-advice side of the language rules', () => {
-    for (const text of [CLOSEST_TITLE, CLOSEST_LENS, POLYMARKET_RISK, CLOSEST_EMPTY, CLOSEST_ERROR, PAPER_TRACK_FRAMING]) {
+    for (const text of [CLOSEST_TITLE, CLOSEST_LENS, POLYMARKET_RISK, CLOSEST_EMPTY, CLOSEST_ERROR, PAPER_TRACK_FRAMING, LONG_SHORT_LINE]) {
       expect(bannedLanguageHits(text), text).toEqual([])
     }
   })

@@ -1,17 +1,14 @@
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { ClosestMatches } from '../components/ClosestMatches'
 import { isMappable, mapExpression } from '../lib/markets/mapExpression'
 import { saveExpression } from '../lib/storage'
 import { usePageTitle } from '../lib/usePageTitle'
 import type { ExpressionMapping } from '../lib/markets/types'
 
-const FLAGSHIP = 'The US economy is going down the toilet.'
-
 const EXAMPLES = [
-  { id: 'us-economy-down', label: 'US economy', text: FLAGSHIP },
-  { id: 'electric-vehicles', label: 'Electric cars', text: 'Electric cars are shit.' },
-  { id: 'bitcoin', label: 'Bitcoin', text: 'You should invest in Bitcoin.' },
+  { id: 'recession', text: "We're heading for a recession" },
+  { id: 'rates', text: 'Rates stay high into next year' },
+  { id: 'houses', text: 'House prices fall from here' },
 ]
 
 export function HomePage() {
@@ -55,156 +52,64 @@ export function HomePage() {
     if (isMappable(draft)) submitStatement(draft)
   }
 
+  const composer = (
+    <form className={mapping ? 'hero-card rematch' : 'hero-card home-card'} onSubmit={onSubmit}>
+      <label className="sr-only" htmlFor="statement">
+        {mapping ? 'Edit the sentence' : 'Your statement'}
+      </label>
+      {mapping ? <p className="field-quiet">Edit the sentence</p> : null}
+      <div className={mapping ? 'rematch-bar' : undefined}>
+        <textarea
+          id="statement"
+          className="claim-input"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={onStatementKeyDown}
+          placeholder="Type a sentence"
+          maxLength={400}
+        />
+        <div className={mapping ? undefined : 'home-actions'}>
+          <button className="btn" type="submit" disabled={!isMappable(draft)}>
+            Enter
+          </button>
+        </div>
+      </div>
+      {error ? <p className="alert">{error}</p> : null}
+      <div className="statement-chips">
+        {EXAMPLES.map((example) => (
+          <button
+            key={example.id}
+            type="button"
+            className="statement-chip"
+            onClick={() => {
+              setDraft(example.text)
+              submitStatement(example.text)
+            }}
+          >
+            {example.text}
+          </button>
+        ))}
+      </div>
+    </form>
+  )
+
   return (
     <div className="wrap">
       {mapping ? (
         <div className="submitted-top" ref={resultsRef}>
-          <p className="eyebrow">Your statement</p>
           <h1 className="result-statement">“{mapping.original}”</h1>
           <ClosestMatches mapping={mapping} />
-          <form className="hero-card rematch" onSubmit={onSubmit}>
-            <label className="field" htmlFor="statement">
-              Edit the sentence
-            </label>
-            <div className="rematch-bar">
-              <textarea
-                id="statement"
-                className="claim-input"
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={onStatementKeyDown}
-                placeholder={FLAGSHIP}
-                maxLength={400}
-              />
-              <button className="btn" type="submit" disabled={!isMappable(draft)}>
-                See closest matches
-              </button>
-            </div>
-            {error ? <p className="alert">{error}</p> : null}
-            <div className="example-row">
-              <div className="presets">
-                {EXAMPLES.map((example) => (
-                  <button
-                    key={example.id}
-                    type="button"
-                    className="preset"
-                    onClick={() => {
-                      setDraft(example.text)
-                      submitStatement(example.text)
-                    }}
-                  >
-                    {example.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </form>
+          {composer}
         </div>
       ) : (
-        <section className="hero">
-          <div>
-            <p className="eyebrow">Paper expressions · fake money · real marks</p>
-            <h1>Paste the gut sentence. See how that view shows up.</h1>
-            <p className="lede">
-              Press Enter. The next thing you see is a few live ways that view shows up — prediction
-              markets, shares, indices, and similar bets. Facts and mechanics only. Not a tip, not a
-              dunk, not a broker.
-            </p>
-          </div>
-          <form className="hero-card" onSubmit={onSubmit}>
-            <label className="field" htmlFor="statement">
-              Paste a gut statement
-            </label>
-            <textarea
-              id="statement"
-              className="claim-input"
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={onStatementKeyDown}
-              placeholder={FLAGSHIP}
-              maxLength={400}
-            />
-            <div className="form-row">
-              <p className="hint">Press Enter. Shift+Enter for a new line.</p>
-              <button className="btn" type="submit" disabled={!isMappable(draft)}>
-                See closest matches
-              </button>
-            </div>
-            {error ? <p className="alert">{error}</p> : null}
-            <div className="example-row">
-              <p className="hint">Or try a worked sentence</p>
-              <div className="presets">
-                {EXAMPLES.map((example) => (
-                  <button
-                    key={example.id}
-                    type="button"
-                    className="preset"
-                    onClick={() => {
-                      setDraft(example.text)
-                      submitStatement(example.text)
-                    }}
-                  >
-                    {example.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </form>
+        <section className="home-first">
+          <h1 className="home-sentence">
+            Type what you'd say to friends. See the closest live markets.
+          </h1>
+          {composer}
+          <p className="home-note">Paper only. Not advice, and not a broker.</p>
         </section>
       )}
-
-      <div className="section-head">
-        <div>
-          <p className="eyebrow">How it works</p>
-          <h2>Express the view. Track it on paper. Go deeper if you want.</h2>
-        </div>
-      </div>
-      <div className="step-grid four">
-        <article className="step">
-          <strong>1. Paste the sentence</strong>
-          <p>The blunt thing you said to a sibling or a mate — then press Enter.</p>
-        </article>
-        <article className="step">
-          <strong>2. Closest live matches</strong>
-          <p>About three ways the view shows up: a prediction market, a share, an index, or a similar bet.</p>
-        </article>
-        <article className="step">
-          <strong>3. Paper track</strong>
-          <p>
-            Paper P&amp;L follows the expression you pick — a Polymarket market, a stock or index, a bet,
-            or similar. Fake money. Not only an S&amp;P proxy. No cash-out. No prizes.
-          </p>
-        </article>
-        <article className="step">
-          <strong>4. Go deeper</strong>
-          <p>Optional: the older agreement maps, blog, and play-point stakes on contested claims.</p>
-        </article>
-      </div>
-
-      <div className="section-head">
-        <div>
-          <p className="eyebrow">Go deeper</p>
-          <h2>Maps, notes, and the old play-point table</h2>
-        </div>
-        <p className="muted">Still here. Not required before you look at a live match.</p>
-      </div>
-      <div className="seed-grid deeper-grid">
-        <Link className="seed-card" to="/deeper">
-          <span className="pill">Agreement maps</span>
-          <blockquote>Shared premises versus the leftover claim</blockquote>
-          <p>The original Venn maps, including the spicy seed sentences.</p>
-        </Link>
-        <Link className="seed-card" to="/blog">
-          <span className="pill">Blog</span>
-          <blockquote>Pitch and worked examples</blockquote>
-          <p>Short essays in the same warm register. No buy tips.</p>
-        </Link>
-        <Link className="seed-card" to="/leaderboard">
-          <span className="pill">Leaderboard</span>
-          <blockquote>Play points on contested claims</blockquote>
-          <p>A local table for the map stakes — separate from the paper book.</p>
-        </Link>
-      </div>
     </div>
   )
 }

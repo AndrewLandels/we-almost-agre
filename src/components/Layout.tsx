@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { usePaperBook } from '../hooks/usePaperBook'
 import { formatUnits } from '../lib/markets/ledger'
 import { DisclaimerBar } from './DisclaimerBar'
@@ -16,6 +16,7 @@ function BrandMark() {
 
 export function Layout() {
   const { equity } = usePaperBook()
+  const onHome = useLocation().pathname === '/'
 
   return (
     <div className="shell">
@@ -28,7 +29,7 @@ export function Layout() {
             <BrandMark />
             <span>
               <span className="brand-name">We Almost Agree</span>
-              <span className="brand-tag">Find where you already agree.</span>
+              {onHome ? null : <span className="brand-tag">Find where you already agree.</span>}
             </span>
           </NavLink>
           <div className="header-tools">
@@ -39,10 +40,12 @@ export function Layout() {
               <NavLink to="/book">Book</NavLink>
               <NavLink to="/deeper">Go deeper</NavLink>
             </nav>
-            <NavLink className="points-chip" to="/book" title="Paper book — fake money on a market expression">
-              <span aria-hidden="true" />
-              Book · {formatUnits(equity, 0)}
-            </NavLink>
+            {onHome ? null : (
+              <NavLink className="points-chip" to="/book" title="Paper book — fake money on a market expression">
+                <span aria-hidden="true" />
+                Book · {formatUnits(equity, 0)}
+              </NavLink>
+            )}
           </div>
         </div>
       </header>

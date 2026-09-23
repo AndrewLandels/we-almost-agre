@@ -37,6 +37,21 @@ describe('mapExpression', () => {
     )
   })
 
+  it('maps kitchen-table macro sentences onto paper expressions', () => {
+    const recession = mapExpression("We're heading for a recession")
+    expect(recession.id).toBe('us-economy-down')
+    expect(recession.suggestions[0]?.symbolId).toBe('SPY')
+
+    const rates = mapExpression('Rates stay high into next year')
+    expect(rates.id).toBe('rates-high')
+    expect(rates.suggestions.map((row) => row.symbolId)).toEqual(['JPM', 'SPY', 'GLD'])
+
+    const houses = mapExpression('House prices fall from here')
+    expect(houses.id).toBe('house-prices')
+    expect(houses.suggestions.map((row) => row.symbolId)).toEqual(['JPM', 'SPY'])
+    expect(houses.framing.toLowerCase()).toMatch(/not house prices/)
+  })
+
   it('labels unmatched text as a first-pass heuristic', () => {
     const result = mapExpression('Schools should ban phones entirely.')
     expect(result.source).toBe('heuristic')
@@ -56,6 +71,9 @@ describe('educational language', () => {
       mapExpression('Electric cars are shit.'),
       mapExpression('You should invest in Bitcoin.'),
       mapExpression('Gold is the only safe asset left.'),
+      mapExpression("We're heading for a recession"),
+      mapExpression('Rates stay high into next year'),
+      mapExpression('House prices fall from here'),
       cannedMapping('us-economy-down')!,
     ]
 
