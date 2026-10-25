@@ -23,3 +23,21 @@ await esbuild.build({
   entryPoints: ['server/handlers/polymarket.ts'],
   outfile: 'api/polymarket.js',
 })
+
+await esbuild.build({
+  ...shared,
+  entryPoints: ['server/handlers/agree.ts'],
+  outfile: 'api/agree.js',
+})
+
+await esbuild.build({
+  ...shared,
+  entryPoints: ['server/handlers/agreePreview.ts'],
+  outfile: 'api/agree-preview.js',
+})
+
+await esbuild.build({
+  ...shared,
+  entryPoints: ['server/handlers/agreeOg.ts'],
+  outfile: 'api/agree-og.js',
+})
