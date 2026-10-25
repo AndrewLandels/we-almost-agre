@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import middleware, { isShareCrawler, shouldRewriteSharePreview } from './middleware.js'
+import middleware, { config, isShareCrawler, shouldRewriteSharePreview } from './middleware.js'
 import { isShareCrawler as specCrawler, shouldRewriteSharePreview as specRewrite } from './src/lib/agree/crawlers.ts'
 
 const samples = [
@@ -30,6 +30,8 @@ describe('share link middleware', () => {
     expect(source).not.toMatch(/from\s+['"][^'"]*crawlers/)
     expect(source).toContain('x-middleware-next')
     expect(source).toContain('x-middleware-rewrite')
+    expect(config.runtime).toBe('nodejs')
+    expect(config.matcher).toEqual(['/agree/c/:code'])
   })
 
   it('matches the typed crawler spec', () => {

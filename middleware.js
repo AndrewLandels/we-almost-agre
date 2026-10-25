@@ -18,6 +18,9 @@ export function shouldRewriteSharePreview(userAgent, pathname) {
 
 export const config = {
   matcher: ['/agree/c/:code'],
+  // Edge is deprecated and crashes this file on invocation. Node.js is the
+  // runtime that honours x-middleware-rewrite / x-middleware-next.
+  runtime: 'nodejs',
 }
 
 export default function middleware(request) {
