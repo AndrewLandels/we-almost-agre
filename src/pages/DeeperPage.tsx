@@ -50,6 +50,11 @@ export function DeeperPage() {
         </div>
       </div>
       <div className="seed-grid deeper-grid">
+        <Link className="seed-card" to="/agree">
+          <span className="pill">Agreement Gap</span>
+          <blockquote>Three taps, then send the link</blockquote>
+          <p>A calmer comparison on everyday topics. Anonymous, and private unless you share it.</p>
+        </Link>
         <Link className="seed-card" to="/blog">
           <span className="pill">Blog</span>
           <blockquote>Pitch and worked examples</blockquote>

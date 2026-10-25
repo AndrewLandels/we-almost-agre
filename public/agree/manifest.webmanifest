@@ -1,0 +1,32 @@
+{
+  "id": "/agree",
+  "name": "We Almost Agree",
+  "short_name": "Almost Agree",
+  "description": "Three taps on a hot topic. See how much you already agree.",
+  "start_url": "/agree",
+  "scope": "/agree",
+  "display": "standalone",
+  "background_color": "#fbf7f2",
+  "theme_color": "#fbf7f2",
+  "lang": "en-GB",
+  "icons": [
+    {
+      "src": "/agree/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/agree/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/agree/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

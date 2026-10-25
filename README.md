@@ -48,6 +48,9 @@ No API key is required for the default delayed Yahoo Finance feed.
 | `/blog` | Blog index |
 | `/blog/:slug` | Full post |
 | `/about` | Ethos and what this run leaves out |
+| `/agree` | Agreement Gap — three taps, a share link, the overlap |
+| `/agree/t/:topic` | Answer the three statements |
+| `/agree/c/:code` | Friend link, then the result |
 | `/api/quote?symbols=SPY,GLD` | Delayed public marks (dev plugin + Vercel function) |
 
 Seed claim ids: `electric-cars`, `bitcoin`, `us-speech`.  
@@ -156,6 +159,54 @@ The older claim-map loop is intact:
 - Seed maps and `analyzeClaim()` first-pass heuristic
 - Play-money **points** on contested claims only (starting **1,000**, separate from the paper book)
 - Blog posts in `src/content/posts/`, registered in `src/data/posts.ts`
+
+## Agreement Gap
+
+Mobile-first page at `/agree`. Pick one of six starter topics, answer three statements (Agree / Unsure / Disagree), send the link. When a friend answers the same three, both see **You agree X%**.
+
+Scoring: Agree = +1, Unsure = 0, Disagree = −1. Agreement is `100 × (1 − mean(|A − B| / 2))`. Common ground (the same answer) is shown first. The page ends on that overlap. Crowd totals appear only once a topic has 30 or more answers, and only as percentages.
+
+No login. Answers are anonymous. A link is the only way to see a pair, and it expires after 30 days. Comparisons are `noindex`.
+
+The page can be installed: manifest, icons, and **Get the app** (on iPhone that is Safari → Share → Add to Home Screen).
+
+### Database
+
+Hosted on the Supabase project **we-almost-agree** (`eu-west-2`, ref `xcedcymypsrafknfzxxz`). Tables `agree_topics`, `agree_statements`, `agree_comparisons`, and `agree_events` have row level security on and no client access. The API uses the service role, either from Vercel env or from the edge function `agree`.
+
+Local `npm run dev` stores comparisons in `.data/agree.json` (gitignored) so you can try the flow without keys. Topics in that mode come from `src/lib/agree/topics.ts`.
+
+On Vercel, if `SUPABASE_SECRET_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`) and `SUPABASE_URL` are set, the serverless function talks to Postgres itself. Otherwise it proxies to:
+
+`https://xcedcymypsrafknfzxxz.supabase.co/functions/v1/agree`
+
+That function is already deployed for this project (`verify_jwt` off, because the link code is the secret). Rebuild it with `node scripts/bundle-edge.mjs` and redeploy only when the API changes and Vercel does not have the database keys. Optional `AGREE_EDGE_SECRET` must match the same secret on the edge function. See `.env.example`. None of these belong in `VITE_*`.
+
+### Add a topic without a code change
+
+Insert it unapproved, then flip the flag when the wording is ready:
+
+```sql
+insert into public.agree_topics (id, title, blurb, approved, sort_order)
+values ('dogs-or-cats', 'Dogs or cats', 'A calmer argument.', false, 7);
+
+insert into public.agree_statements (id, topic_id, position, body) values
+  ('dogs-or-cats-1', 'dogs-or-cats', 1, 'First statement.'),
+  ('dogs-or-cats-2', 'dogs-or-cats', 2, 'Second statement.'),
+  ('dogs-or-cats-3', 'dogs-or-cats', 3, 'Third statement.');
+
+update public.agree_topics set approved = true where id = 'dogs-or-cats';
+```
+
+Counts for the loop:
+
+```sql
+select name, count(*) from public.agree_events group by name;
+```
+
+The schema is in `supabase/agree_gap.sql`. It is already applied on the hosted project.
+
+Shared links get an Open Graph card from `/api/agree-preview` (crawlers only, so a friend opening the link in WhatsApp still gets the page).
 
 ## What this run excludes
 

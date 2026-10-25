@@ -6,3 +6,5 @@ dist-ssr
 .DS_Store
 .vite
 coverage
+.data
+supabase/functions/

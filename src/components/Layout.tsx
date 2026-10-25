@@ -56,6 +56,7 @@ export function Layout() {
         <div className="wrap footer-inner">
           <p>We Almost Agree · paper trading only · not a broker · wealmostagree.com</p>
           <nav className="footer-nav" aria-label="Secondary">
+            <NavLink to="/agree">Agreement Gap</NavLink>
             <NavLink to="/blog">Blog</NavLink>
             <NavLink to="/leaderboard">Leaderboard</NavLink>
             <NavLink to="/about">About</NavLink>
